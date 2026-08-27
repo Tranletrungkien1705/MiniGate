@@ -28,7 +28,8 @@ public static class Seeder
                 new GwRoute { Name = "Car Service (RO)", Prefix = "service", UpstreamBaseUrl = "https://miniservice-hytf.onrender.com" },
                 new GwRoute { Name = "Showroom (bán xe)", Prefix = "showroom", UpstreamBaseUrl = "https://minishowroom.onrender.com" },
                 new GwRoute { Name = "Insurance (bảo hiểm)", Prefix = "insurance", UpstreamBaseUrl = "https://miniinsurance.onrender.com" },
-                new GwRoute { Name = "Contract (bảo mật)", Prefix = "contract", UpstreamBaseUrl = "https://minicontract.onrender.com", RequireAuth = true });
+                new GwRoute { Name = "Contract (bảo mật)", Prefix = "contract", UpstreamBaseUrl = "https://minicontract.onrender.com", RequireAuth = true },
+                new GwRoute { Name = "HR (nhân sự)", Prefix = "hr", UpstreamBaseUrl = "https://minihr-kz1i.onrender.com" });
             await db.SaveChangesAsync();
         }
         if (!await db.Clients.AnyAsync())
