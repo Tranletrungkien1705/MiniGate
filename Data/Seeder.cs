@@ -24,6 +24,7 @@ public static class Seeder
                 new GwRoute { Name = "Warehouse (WMS)", Prefix = "wms", UpstreamBaseUrl = "https://miniwms.onrender.com" },
                 new GwRoute { Name = "E-Invoice", Prefix = "invoice", UpstreamBaseUrl = "https://qinvoicelite.onrender.com" },
                 new GwRoute { Name = "Anti-counterfeit Stamp", Prefix = "stamp", UpstreamBaseUrl = "https://ministamp.onrender.com" },
+                new GwRoute { Name = "Traceability (nguồn gốc)", Prefix = "trace", UpstreamBaseUrl = "https://minitrace.onrender.com" },
                 new GwRoute { Name = "Car Service (RO)", Prefix = "service", UpstreamBaseUrl = "https://miniservice-hytf.onrender.com" },
                 new GwRoute { Name = "Showroom (bán xe)", Prefix = "showroom", UpstreamBaseUrl = "https://minishowroom.onrender.com" },
                 new GwRoute { Name = "Insurance (bảo hiểm)", Prefix = "insurance", UpstreamBaseUrl = "https://miniinsurance.onrender.com" },
