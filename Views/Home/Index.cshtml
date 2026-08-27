@@ -1,0 +1,26 @@
+@{ ViewData["Title"] = "Bảng điều khiển"; var d = (GateDash)ViewBag.Dash; }
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tuyến (active)</div><div class="stat-num">@d.ActiveRoutes<span class="text-muted" style="font-size:15px">/@d.Routes</span></div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Client</div><div class="stat-num">@d.Clients</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Request 24h</div><div class="stat-num" style="color:#059669">@d.Requests24h.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Độ trễ TB</div><div class="stat-num">@d.AvgLatency<span style="font-size:14px">ms</span></div></div></div></div>
+</div>
+<div class="row g-3">
+    <div class="col-lg-6"><div class="card"><div class="card-body">
+        <h6 class="fw-bold mb-3">Mã trạng thái (24h)</h6>
+        @if (d.ByStatus.Count == 0) { <div class="text-muted">Chưa có request. Thử ở mục <a href="/Playground">Thử cổng</a>.</div> }
+        @foreach (var (code, cnt) in d.ByStatus)
+        {
+            var css = code < 300 ? "success" : code < 400 ? "info" : code < 500 ? "warning" : "danger";
+            var pct = d.Requests24h == 0 ? 0 : cnt * 100 / d.Requests24h;
+            <div class="mb-2"><div class="d-flex justify-content-between small"><span><span class="badge bg-@css">@code</span></span><span class="text-muted">@cnt</span></div>
+                <div class="progress" style="height:7px"><div class="progress-bar bg-@css" style="width:@pct%"></div></div></div>
+        }
+    </div></div></div>
+    <div class="col-lg-6"><div class="card"><div class="card-body">
+        <h6 class="fw-bold mb-3">Tuyến bận nhất (24h)</h6>
+        @foreach (var (r, cnt) in d.TopRoutes) { <div class="d-flex justify-content-between border-bottom py-1 small"><span>@r</span><span class="fw-semibold">@cnt</span></div> }
+        @if (d.TopRoutes.Count == 0) { <div class="text-muted">—</div> }
+        <a href="/Playground" class="btn btn-primary w-100 mt-3"><i class="bi bi-play-circle me-1"></i>Thử gọi qua cổng</a>
+    </div></div></div>
+</div>
