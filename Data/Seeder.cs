@@ -19,6 +19,7 @@ public static class Seeder
         if (!await db.Routes.AnyAsync())
         {
             db.Routes.AddRange(
+                new GwRoute { Name = "Identity (SSO/OIDC)", Prefix = "sso", UpstreamBaseUrl = "https://minisso.onrender.com" },
                 new GwRoute { Name = "Product Center (PIM)", Prefix = "pim", UpstreamBaseUrl = "https://minipim.onrender.com" },
                 new GwRoute { Name = "Warehouse (WMS)", Prefix = "wms", UpstreamBaseUrl = "https://miniwms.onrender.com" },
                 new GwRoute { Name = "E-Invoice", Prefix = "invoice", UpstreamBaseUrl = "https://qinvoicelite.onrender.com" },
