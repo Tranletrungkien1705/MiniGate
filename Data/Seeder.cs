@@ -33,7 +33,9 @@ public static class Seeder
                 new GwRoute { Name = "Reconcile (đối soát công nợ)", Prefix = "reconcile", UpstreamBaseUrl = "https://minireconcile.onrender.com" },
                 new GwRoute { Name = "Promo (khuyến mãi/quay thưởng)", Prefix = "promo", UpstreamBaseUrl = "https://minipromo.onrender.com" },
                 new GwRoute { Name = "Origin (truy xuất GS1 theo lô)", Prefix = "origin", UpstreamBaseUrl = "https://miniorigin.onrender.com" },
-                new GwRoute { Name = "T-VAN (truyền HĐĐT tới TCT)", Prefix = "tvan", UpstreamBaseUrl = "https://minitvan.onrender.com" });
+                new GwRoute { Name = "T-VAN (truyền HĐĐT tới TCT)", Prefix = "tvan", UpstreamBaseUrl = "https://minitvan.onrender.com" },
+                new GwRoute { Name = "Sign (cổng ký số RSA)", Prefix = "sign", UpstreamBaseUrl = "https://minisign.onrender.com" },
+                new GwRoute { Name = "Geo (danh mục hành chính 2025)", Prefix = "geo", UpstreamBaseUrl = "https://minigeo.onrender.com" });
             await db.SaveChangesAsync();
         }
         if (!await db.Clients.AnyAsync())
