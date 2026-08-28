@@ -2,10 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using MiniGate.Data;
 using MiniGate.Models;
 using MiniGate.Services;
+using Serilog;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+FleetObs.ConfigureLogger("minigate");
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
 builder.WebHost.UseUrls($"http://0.0.0.0:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}");
 
 var conn = Environment.GetEnvironmentVariable("CONNECTION_STRING")
@@ -20,11 +23,14 @@ builder.Services.AddScoped<IGateAdminService, GateAdminService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<RateLimiter>();
 builder.Services.AddSingleton<GatewayProxy>();
+builder.Services.AddFleetObs();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
     await Seeder.SeedAsync(scope.ServiceProvider.GetRequiredService<AppDbContext>());
+
+app.UseFleetObs();
 
 // ─── CỔNG API: chuyển tiếp /gw/{prefix}/... tới upstream (proxy tự resolve client/org) ───
 app.Map("/gw/{**path}", async (HttpContext ctx, string? path, GatewayProxy proxy) =>
