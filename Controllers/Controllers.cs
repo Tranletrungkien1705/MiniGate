@@ -6,9 +6,15 @@ using MiniGate.Services;
 
 namespace MiniGate.Controllers;
 
-public class HomeController(IGateAdminService svc) : Controller
+public class HomeController : Controller
 {
-    public async Task<IActionResult> Index() { ViewBag.Dash = await svc.DashboardAsync(); return View(); }
+    // SPA React (admin) ở "/". Proxy /gw/{**path} giữ nguyên (đứng trước cả fleet).
+    public IActionResult Index() => Redirect("/index.html");
+}
+
+public class LegacyController(IGateAdminService svc) : Controller
+{
+    public async Task<IActionResult> Index() { ViewBag.Dash = await svc.DashboardAsync(); return View("~/Views/Home/Index.cshtml"); }
 }
 
 public class RouteController(IGateAdminService svc) : Controller
