@@ -1,0 +1,39 @@
+name: Bonsai log retention
+
+# Bonsai Sandbox (OpenSearch) giới hạn 35k documents. ISM bị chặn trên Sandbox,
+# nên xoá index fleet-events-* cũ hơn RETENTION_DAYS bằng cron này (giữ cluster dưới hạn).
+on:
+  schedule:
+    - cron: '17 1 * * *'   # 01:17 UTC hằng ngày
+  workflow_dispatch: {}     # cho phép chạy tay
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    env:
+      URL: ${{ secrets.BONSAI_URL }}
+      USER: ${{ secrets.BONSAI_USER }}
+      PASS: ${{ secrets.BONSAI_PASS }}
+      RETENTION_DAYS: 3
+    steps:
+      - name: Delete fleet-events indices older than RETENTION_DAYS
+        run: |
+          set -euo pipefail
+          cutoff=$(date -u -d "${RETENTION_DAYS} days ago" +%s)
+          echo "Cutoff: $(date -u -d @${cutoff} +%Y-%m-%d) (giữ lại ${RETENTION_DAYS} ngày gần nhất)"
+          idx=$(curl -s -u "$USER:$PASS" "$URL/_cat/indices/fleet-events-*?h=index" | tr -d '\r')
+          [ -z "$idx" ] && { echo "Không có index fleet-events-*"; exit 0; }
+          deleted=0
+          for i in $idx; do
+            d=${i#fleet-events-}                       # YYYY.MM.DD
+            iso=${d//./-}
+            di=$(date -u -d "$iso" +%s 2>/dev/null) || { echo "bỏ qua $i (không phải index ngày)"; continue; }
+            if [ "$di" -lt "$cutoff" ]; then
+              echo "Xoá $i"
+              curl -s -u "$USER:$PASS" -X DELETE "$URL/$i" >/dev/null
+              deleted=$((deleted+1))
+            fi
+          done
+          echo "Đã xoá $deleted index."
+      - name: Report remaining
+        run: curl -s -u "$USER:$PASS" "$URL/_cat/indices/fleet-events-*?h=index,docs.count,store.size&s=index"
