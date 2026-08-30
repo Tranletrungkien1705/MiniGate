@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fleet BI</title>
+<style>
+  :root { --bg:#0f1220; --card:#1a1f36; --fg:#e8ecf5; --muted:#9aa4bf; --line:#2a3150; --ok:#3ddc84; --warn:#ffb020; --err:#ff5c72; --accent:#6ea8fe; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f4f6fb; --card:#fff; --fg:#141a2e; --muted:#5b6480; --line:#e3e8f4; } }
+  * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:1080px; margin:0 auto; padding:28px 20px 60px; }
+  h1 { margin:0 0 2px; font-size:22px; } .sub { color:var(--muted); font-size:13px; margin-bottom:20px; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:22px; }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .kpi .n { font-size:26px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .kpi .l { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin-top:4px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:20px; }
+  .card h2 { font-size:14px; margin:0 0 12px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:600; font-size:12px; } td.n { text-align:right; font-variant-numeric:tabular-nums; }
+  .bar { height:8px; border-radius:6px; background:var(--accent); }
+  .barwrap { background:var(--line); border-radius:6px; overflow:hidden; min-width:60px; }
+  .err { color:var(--err); } .muted { color:var(--muted); }
+  .spark { display:flex; align-items:flex-end; gap:3px; height:60px; }
+  .spark > div { flex:1; background:var(--accent); border-radius:2px 2px 0 0; min-height:2px; }
+  select { background:var(--card); color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:6px 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Fleet BI — số liệu xuyên app</h1>
+  <div class="sub">Gom từ nhật ký cổng MiniGate (mọi request /gw/* qua fleet). <span id="gen"></span>
+    &nbsp;·&nbsp; Cửa sổ: <select id="days" onchange="load()">
+      <option value="1">1 ngày</option><option value="7" selected>7 ngày</option>
+      <option value="30">30 ngày</option><option value="90">90 ngày</option>
+    </select></div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card"><h2>Lưu lượng theo ngày</h2><div class="spark" id="spark"></div></div>
+
+  <div class="card"><h2>Theo app (tuyến)</h2>
+    <table><thead><tr><th>App</th><th class="n">Requests</th><th></th><th class="n">Lỗi</th><th class="n">TB (ms)</th><th class="n">Max (ms)</th><th>Gần nhất</th></tr></thead>
+    <tbody id="perApp"></tbody></table>
+  </div>
+
+  <div class="card"><h2>Theo mã trạng thái</h2><table><thead><tr><th>Lớp</th><th class="n">Số lượng</th></tr></thead><tbody id="perStatus"></tbody></table></div>
+</div>
+
+<script>
+async function load() {
+  const days = document.getElementById('days').value;
+  const r = await fetch('/api/bi/summary?days=' + days);
+  const d = await r.json();
+  document.getElementById('gen').textContent = 'Cập nhật: ' + new Date(d.generatedAt).toLocaleString('vi-VN');
+  const t = d.totals;
+  document.getElementById('kpis').innerHTML = [
+    ['Tổng requests', t.requests.toLocaleString('vi-VN')],
+    ['Tỷ lệ lỗi', t.errorRatePct + '%'],
+    ['Lỗi 5xx', t.serverErrors.toLocaleString('vi-VN')],
+    ['Độ trễ TB', t.avgLatencyMs + ' ms'],
+    ['Số app hoạt động', d.perApp.length],
+  ].map(([l,n]) => `<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+
+  const maxDay = Math.max(1, ...d.perDay.map(x => x.count));
+  document.getElementById('spark').innerHTML = d.perDay.map(x =>
+    `<div title="${x.day}: ${x.count} req, ${x.errors} lỗi" style="height:${Math.round(x.count/maxDay*100)}%"></div>`).join('') || '<span class="muted">Chưa có dữ liệu</span>';
+
+  const maxApp = Math.max(1, ...d.perApp.map(x => x.count));
+  document.getElementById('perApp').innerHTML = d.perApp.map(x => `
+    <tr><td>${x.app || '<span class="muted">(none)</span>'}</td>
+    <td class="n">${x.count.toLocaleString('vi-VN')}</td>
+    <td style="width:120px"><div class="barwrap"><div class="bar" style="width:${Math.round(x.count/maxApp*100)}%"></div></div></td>
+    <td class="n ${x.errors?'err':''}">${x.errors}</td>
+    <td class="n">${x.avgLatencyMs}</td><td class="n">${x.maxLatencyMs}</td>
+    <td class="muted">${new Date(x.lastAt).toLocaleString('vi-VN')}</td></tr>`).join('')
+    || '<tr><td colspan="7" class="muted">Chưa có lưu lượng qua cổng.</td></tr>';
+
+  document.getElementById('perStatus').innerHTML = d.perStatus.map(x =>
+    `<tr><td>${x.klass}</td><td class="n">${x.count.toLocaleString('vi-VN')}</td></tr>`).join('')
+    || '<tr><td colspan="2" class="muted">—</td></tr>';
+}
+load();
+</script>
+</body>
+</html>

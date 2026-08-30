@@ -67,6 +67,50 @@ app.MapPost("/api/orgs/register", async (RegisterOrgDto dto, AppDbContext db) =>
     return Results.Ok(new { orgId = org.Id, apiKey = org.ApiKey });
 });
 
+// ─── BI dashboard xuyên app: gom nhật ký cổng (RequestLog) — nguồn số liệu trung tâm cả fleet ───
+// Đọc xuyên tenant (IgnoreQueryFilters): traffic/lỗi/độ trễ theo từng app + theo ngày + top tuyến.
+app.MapGet("/api/bi/summary", async (AppDbContext db, int? days) =>
+{
+    var d = Math.Clamp(days ?? 7, 1, 90);
+    var from = DateTime.Now.Date.AddDays(-(d - 1));
+    var q = db.Logs.IgnoreQueryFilters().Where(l => l.At >= from);
+
+    var total = await q.CountAsync();
+    var errors = await q.CountAsync(l => l.StatusCode >= 400);
+    var serverErrors = await q.CountAsync(l => l.StatusCode >= 500);
+    var avgLatency = total == 0 ? 0 : await q.AverageAsync(l => (double)l.LatencyMs);
+
+    var perApp = await q.GroupBy(l => l.RouteName)
+        .Select(g => new
+        {
+            app = g.Key,
+            count = g.Count(),
+            errors = g.Count(x => x.StatusCode >= 400),
+            avgLatencyMs = Math.Round(g.Average(x => (double)x.LatencyMs), 1),
+            maxLatencyMs = g.Max(x => x.LatencyMs),
+            lastAt = g.Max(x => x.At)
+        })
+        .OrderByDescending(x => x.count).ToListAsync();
+
+    var perDayRaw = await q.GroupBy(l => l.At.Date)
+        .Select(g => new { day = g.Key, count = g.Count(), errors = g.Count(x => x.StatusCode >= 400) })
+        .OrderBy(x => x.day).ToListAsync();
+    var perDay = perDayRaw.Select(x => new { day = x.day.ToString("yyyy-MM-dd"), x.count, x.errors });
+
+    var perStatus = (await q.GroupBy(l => l.StatusCode / 100)
+        .Select(g => new { bucket = g.Key, count = g.Count() }).ToListAsync())
+        .OrderBy(x => x.bucket).Select(x => new { klass = x.bucket + "xx", x.count });
+
+    return Results.Ok(new
+    {
+        windowDays = d, generatedAt = DateTime.Now,
+        totals = new { requests = total, errors, serverErrors,
+            errorRatePct = total == 0 ? 0 : Math.Round(errors * 100.0 / total, 2),
+            avgLatencyMs = Math.Round(avgLatency, 1) },
+        perApp, perStatus, perDay
+    });
+});
+
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 app.Run();
 
