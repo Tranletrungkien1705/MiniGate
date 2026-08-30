@@ -82,7 +82,7 @@ public sealed class GatewayProxy(IServiceProvider sp, IHttpClientFactory httpFac
             foreach (var h in resp.Content.Headers)
                 if (!h.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
                     ctx.Response.Headers[h.Key] = h.Value.ToArray();
-            ctx.Response.Headers["X-Gateway-Route"] = route.Name;
+            ctx.Response.Headers["X-Gateway-Route"] = route.Prefix;   // prefix ASCII (route.Name có tiếng Việt → header non-ASCII làm Kestrel ném → 502)
             await resp.Content.CopyToAsync(ctx.Response.Body, ctx.RequestAborted);
             await Log((int)resp.StatusCode, upstreamUrl, route.Name);
         }
