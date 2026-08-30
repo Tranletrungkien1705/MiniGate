@@ -28,15 +28,15 @@ public static class Seeder
                 new GwRoute { Name = "Car Service (RO)", Prefix = "service", UpstreamBaseUrl = "https://miniservice-hytf.onrender.com" },
                 new GwRoute { Name = "Showroom (bán xe)", Prefix = "showroom", UpstreamBaseUrl = "https://minishowroom.onrender.com" },
                 new GwRoute { Name = "Insurance (bảo hiểm)", Prefix = "insurance", UpstreamBaseUrl = "https://miniinsurance.onrender.com" },
-                new GwRoute { Name = "Contract (bảo mật)", Prefix = "contract", UpstreamBaseUrl = "https://minicontract.onrender.com", RequireAuth = true },
+                new GwRoute { Name = "Contract (bảo mật)", Prefix = "contract", UpstreamBaseUrl = "https://minicontract-512u.onrender.com", RequireAuth = true },
                 new GwRoute { Name = "HR (nhân sự)", Prefix = "hr", UpstreamBaseUrl = "https://minihr-kz1i.onrender.com" },
                 new GwRoute { Name = "Reconcile (đối soát công nợ)", Prefix = "reconcile", UpstreamBaseUrl = "https://minireconcile.onrender.com" },
-                new GwRoute { Name = "Promo (khuyến mãi/quay thưởng)", Prefix = "promo", UpstreamBaseUrl = "https://minipromo.onrender.com" },
-                new GwRoute { Name = "Origin (truy xuất GS1 theo lô)", Prefix = "origin", UpstreamBaseUrl = "https://miniorigin.onrender.com" },
+                new GwRoute { Name = "Promo (khuyến mãi/quay thưởng)", Prefix = "promo", UpstreamBaseUrl = "https://minipromo-zoq3.onrender.com" },
+                new GwRoute { Name = "Origin (truy xuất GS1 theo lô)", Prefix = "origin", UpstreamBaseUrl = "https://miniorigin-huug.onrender.com" },
                 new GwRoute { Name = "T-VAN (truyền HĐĐT tới TCT)", Prefix = "tvan", UpstreamBaseUrl = "https://minitvan.onrender.com" },
-                new GwRoute { Name = "Sign (cổng ký số RSA)", Prefix = "sign", UpstreamBaseUrl = "https://minisign.onrender.com" },
-                new GwRoute { Name = "Geo (danh mục hành chính 2025)", Prefix = "geo", UpstreamBaseUrl = "https://minigeo.onrender.com" },
-                new GwRoute { Name = "Notify (thông báo đa kênh)", Prefix = "notify", UpstreamBaseUrl = "https://mininotify.onrender.com" });
+                new GwRoute { Name = "Sign (cổng ký số RSA)", Prefix = "sign", UpstreamBaseUrl = "https://minisign-9tjk.onrender.com" },
+                new GwRoute { Name = "Geo (danh mục hành chính 2025)", Prefix = "geo", UpstreamBaseUrl = "https://minigeo-fz3y.onrender.com" },
+                new GwRoute { Name = "Notify (thông báo đa kênh)", Prefix = "notify", UpstreamBaseUrl = "https://mininotify-yw4g.onrender.com" });
             await db.SaveChangesAsync();
         }
         if (!await db.Clients.AnyAsync())
