@@ -44,6 +44,7 @@ public static class Seeder
             ("Parts (phụ tùng + đặt hàng ĐL)", "parts", "https://miniparts.onrender.com", false),
             ("Booking (đặt lịch dịch vụ)", "booking", "https://minibooking.onrender.com", false),
             ("Form (phôi/ấn chỉ)", "form", "https://miniform.onrender.com", false),
+            ("RBAC (phân quyền Sys_Access)", "rbac", "https://minirbac.onrender.com", false),
         };
         var existing = await db.Routes.ToDictionaryAsync(r => r.Prefix);
         var changed = false;
