@@ -47,6 +47,7 @@ public static class Seeder
             ("RBAC (phân quyền Sys_Access)", "rbac", "https://minirbac.onrender.com", false),
             ("Pricing (bảng giá)", "pricing", "https://minipricing.onrender.com", false),
             ("Sales (hợp đồng bán xe)", "sales", "https://minisales.onrender.com", false),
+            ("HTC (2010.HTC port màn 1:1)", "htc", "https://minihtc.onrender.com", false),
         };
         var existing = await db.Routes.ToDictionaryAsync(r => r.Prefix);
         var changed = false;
