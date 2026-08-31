@@ -42,6 +42,7 @@ public static class Seeder
             ("Payment (VNPay/MoMo)", "pay", "https://minipay-mje6.onrender.com", false),
             ("Vehicle (sổ đăng ký xe VIN)", "vehicle", "https://minivehicle.onrender.com", false),
             ("Parts (phụ tùng + đặt hàng ĐL)", "parts", "https://miniparts.onrender.com", false),
+            ("Booking (đặt lịch dịch vụ)", "booking", "https://minibooking.onrender.com", false),
         };
         var existing = await db.Routes.ToDictionaryAsync(r => r.Prefix);
         var changed = false;
