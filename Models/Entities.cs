@@ -278,3 +278,21 @@ public class SysAccess : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
+
+/// <summary>
+/// Thuế suất GTGT (Mst_VATRate) — danh mục thuế suất dùng khi lập hóa đơn.
+/// Dùng cho danh sách thuế suất (RptSv_Mst_VATRate_Get).
+/// </summary>
+public class MstVatRate : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string VATRateCode { get; set; } = "";     // mã thuế suất
+    public string NetworkID { get; set; } = "";       // mạng/đại lý
+    public decimal VATRate { get; set; }               // giá trị thuế suất (%)
+    public string VATDesc { get; set; } = "";         // mô tả thuế suất
+    public string Remark { get; set; } = "";          // ghi chú
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}

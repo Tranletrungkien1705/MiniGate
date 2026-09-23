@@ -163,6 +163,18 @@ public static class Seeder
                 new SysAccess { GroupCode = "GRP_DL", ObjectCode = "OBJ_DEALER", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục thuế suất GTGT (Mst_VATRate) cho danh sách thuế suất.
+        if (!await db.MstVatRates.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstVatRates.AddRange(
+                new MstVatRate { VATRateCode = "VAT00", NetworkID = "NET-DEMO", VATRate = 0m, VATDesc = "Không chịu thuế", Remark = "Hàng hóa không chịu thuế GTGT", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstVatRate { VATRateCode = "VAT05", NetworkID = "NET-DEMO", VATRate = 5m, VATDesc = "Thuế suất 5%", Remark = "Áp dụng cho một số mặt hàng thiết yếu", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstVatRate { VATRateCode = "VAT08", NetworkID = "NET-DEMO", VATRate = 8m, VATDesc = "Thuế suất 8%", Remark = "Thuế suất ưu đãi theo Nghị quyết", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstVatRate { VATRateCode = "VAT10", NetworkID = "NET-DEMO", VATRate = 10m, VATDesc = "Thuế suất 10%", Remark = "Thuế suất phổ thông", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstVatRate { VATRateCode = "VAT20", NetworkID = "NET-DEMO", VATRate = 20m, VATDesc = "Thuế suất 20%", Remark = "Thuế suất đặc biệt", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

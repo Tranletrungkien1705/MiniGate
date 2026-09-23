@@ -180,6 +180,20 @@ public record SysObjectListResult(
     int RecordStart, int RecordCount, long TotalCount,
     List<SysObjectRow> Rows);
 
+/// <summary>
+/// Một dòng của danh sách thuế suất GTGT (Mst_VATRate) —
+/// mã thuế suất, giá trị %, mô tả, ghi chú, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record VatRateRow(
+    int Idx, string VATRateCode, string NetworkID, decimal VATRate,
+    string VATDesc, string Remark, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách thuế suất GTGT: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record VatRateListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<VatRateRow> Rows);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
@@ -214,6 +228,9 @@ public interface IReportService
 
     Task<SysObjectListResult> SysObjectListAsync(int recordStart = 0, int recordCount = 50,
         string? objectCode = null, string? serviceCode = null, string? objectType = null, bool? flagActive = null);
+
+    Task<VatRateListResult> VatRateListAsync(int recordStart = 0, int recordCount = 50,
+        string? vatRateCode = null, string? networkId = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -844,5 +861,39 @@ public class ReportService(AppDbContext db) : IReportService
             o.LogLUDTimeUTC, o.LogLUBy)).ToList();
 
         return new SysObjectListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách thuế suất GTGT (RptSv_Mst_VATRate_Get) — endpoint tổng hợp:
+    /// trả về danh mục thuế suất (mã/giá trị %/mô tả/ghi chú/trạng thái), có phân trang
+    /// + lọc theo mã thuế suất / mạng-đại lý / trạng thái.
+    /// Port từ RptSv_Mst_VATRate_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Mst_VATRate_Filter_Draft/#tbl_Mst_VATRate_Filter và khối select
+    /// Mst_VATRate thành truy vấn LINQ.
+    /// </summary>
+    public async Task<VatRateListResult> VatRateListAsync(int recordStart = 0, int recordCount = 50,
+        string? vatRateCode = null, string? networkId = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc thuế suất theo mã / mạng-đại lý / trạng thái (tương ứng #tbl_Mst_VATRate_Filter_Draft).
+        var items = await db.MstVatRates
+            .Where(v => string.IsNullOrEmpty(vatRateCode) || v.VATRateCode == vatRateCode)
+            .Where(v => string.IsNullOrEmpty(networkId) || v.NetworkID == networkId)
+            .Where(v => flagActive == null || v.FlagActive == flagActive)
+            .OrderBy(v => v.VATRateCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_VATRate_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((v, i) => new VatRateRow(
+            recordStart + i + 1, v.VATRateCode, v.NetworkID, v.VATRate,
+            v.VATDesc, v.Remark, v.FlagActive,
+            v.LogLUDTimeUTC, v.LogLUBy)).ToList();
+
+        return new VatRateListResult(recordStart, recordCount, total, rows);
     }
 }

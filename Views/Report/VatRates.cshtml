@@ -1,0 +1,65 @@
+@model VatRateListResult
+@{ ViewData["Title"] = "Thuế suất GTGT"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-percent me-1"></i>Danh mục thuế suất GTGT (RptSv_Mst_VATRate)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Mã thuế suất (VATRateCode)</label><input name="vatRateCode" value="@ViewBag.VATRateCode" class="form-control form-control-sm" placeholder="VD: VAT10" /></div>
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Mạng/đại lý (NetworkID)</label><input name="networkId" value="@ViewBag.NetworkID" class="form-control form-control-sm" placeholder="VD: NET-DEMO" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Trạng thái</label>
+            <select name="flagActive" class="form-select form-select-sm">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.FlagActive as string))">Tất cả</option>
+                <option value="1" selected="@(ViewBag.FlagActive == "1")">Đang áp dụng</option>
+                <option value="0" selected="@(ViewBag.FlagActive == "0")">Ngừng áp dụng</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Số bản ghi/trang</label><input type="number" name="recordCount" value="@ViewBag.RecordCount" class="form-control form-control-sm" min="1" /></div>
+        <div class="col-12 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Xem</button></div>
+    </form>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Danh sách thuế suất</h6>
+        <span class="text-muted small">@Model.TotalCount bản ghi · trang bắt đầu @Model.RecordStart</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Mã thuế suất</th>
+                <th>Mạng/đại lý</th>
+                <th class="text-end">Thuế suất (%)</th>
+                <th>Mô tả</th>
+                <th>Ghi chú</th>
+                <th class="text-center">Trạng thái</th>
+                <th>Cập nhật cuối</th>
+                <th>Người cập nhật</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.VATRateCode</td>
+                <td class="small">@(string.IsNullOrEmpty(r.NetworkID) ? "—" : r.NetworkID)</td>
+                <td class="text-end fw-semibold">@r.VATRate.ToString("0.##")</td>
+                <td class="small">@(string.IsNullOrEmpty(r.VATDesc) ? "—" : r.VATDesc)</td>
+                <td class="small">@(string.IsNullOrEmpty(r.Remark) ? "—" : r.Remark)</td>
+                <td class="text-center">
+                    @if (r.FlagActive) { <span class="badge" style="background:#059669">Đang áp dụng</span> }
+                    else { <span class="badge bg-secondary">Ngừng áp dụng</span> }
+                </td>
+                <td class="small">@r.LogLUDTimeUTC.ToString("yyyy-MM-dd HH:mm")</td>
+                <td class="small">@(string.IsNullOrEmpty(r.LogLUBy) ? "—" : r.LogLUBy)</td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="9" class="text-center text-muted py-4">Không có thuế suất nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh mục thuế suất GTGT (mã/giá trị %/mô tả/ghi chú/trạng thái) kèm thông tin cập nhật cuối, có phân trang + lọc theo mã thuế suất / mạng-đại lý / trạng thái.
+    </p>
+</div></div>
