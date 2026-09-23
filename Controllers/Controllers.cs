@@ -102,6 +102,16 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.To = t.ToString("yyyy-MM-dd");
         return View(await svc.InvoiceDashboardAsync(f, t));
     }
+
+    public async Task<IActionResult> Usage(DateTime? from, DateTime? to, string? invoiceType, string? sign, string? formNo)
+    {
+        var f = from ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        var t = to ?? DateTime.Now;
+        ViewBag.From = f.ToString("yyyy-MM-dd");
+        ViewBag.To = t.ToString("yyyy-MM-dd");
+        ViewBag.InvoiceType = invoiceType; ViewBag.Sign = sign; ViewBag.FormNo = formNo;
+        return View(await svc.InvoiceUsageAsync(f, t, invoiceType, sign, formNo));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

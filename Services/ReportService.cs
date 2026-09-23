@@ -33,12 +33,34 @@ public record InvoiceDashboardResult(
     DateTime From, DateTime To,
     List<InvoiceDashboardRow> Rows, List<InvoiceLicenseRow> Licenses);
 
+/// <summary>
+/// Một dòng của báo cáo tình hình sử dụng hóa đơn (BC26/AC) theo khối K1/K2/K3.
+/// K1 = tồn đầu kỳ + phát hành trong kỳ; K2 = sử dụng/xóa bỏ trong kỳ; K3 = tồn cuối kỳ.
+/// </summary>
+public record InvoiceUsageRow(
+    string TInvoiceCode, string InvoiceType, string InvoiceTypeName, string FormNo, string Sign,
+    long K1_TongSo,
+    long? K1_BeginPeriod_Start, long? K1_BeginPeriod_End,
+    long? K1_InPeriod_Start, long? K1_InPeriod_End,
+    long? K2_TongSo_Start, long? K2_TongSo_End, long K2_Total, long K2_TotalUsed,
+    long K2_TotalDel, string K2_ListInvoiceNoDel,
+    long? K3_EndPeriod_Start, long? K3_EndPeriod_End, long K3_EndPeriod_Remain);
+
+/// <summary>Kết quả báo cáo tình hình sử dụng hóa đơn (BC26/AC): các dòng + số liệu cộng dồn.</summary>
+public record InvoiceUsageResult(
+    DateTime From, DateTime To,
+    List<InvoiceUsageRow> Rows,
+    long TotalK1, long TotalUsed, long TotalDel, long TotalRemain);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
         string? invoiceType = null, string? sign = null, string? formNo = null, string? mst = null);
 
     Task<InvoiceDashboardResult> InvoiceDashboardAsync(DateTime from, DateTime to);
+
+    Task<InvoiceUsageResult> InvoiceUsageAsync(DateTime from, DateTime to,
+        string? invoiceType = null, string? sign = null, string? formNo = null);
 }
 
 /// <summary>
@@ -157,5 +179,93 @@ public class ReportService(AppDbContext db) : IReportService
             l.TotalQtyIssued - l.TotalQtyUsed - l.TotalQtyCancel)).ToList();
 
         return new InvoiceDashboardResult(dFrom, dTo, enriched, licenseRows);
+    }
+
+    /// <summary>
+    /// Báo cáo tình hình sử dụng hóa đơn (BC26/AC) theo khối K1/K2/K3.
+    /// Port từ Rpt_Invoice_ResultUsed (MobileGate) — gộp các bảng tạm #tbl_K1/#tbl_K2/#tbl_K3 thành LINQ.
+    ///   K1: tồn đầu kỳ (số HĐ có ngày lập &lt; đầu kỳ) + phát hành trong kỳ (mẫu có EffDateStart trong kỳ).
+    ///   K2: số sử dụng (ISSUED trong kỳ), số xóa bỏ (DELETED/CANCELED trong kỳ) + danh sách số HĐ xóa.
+    ///   K3: tồn cuối kỳ = từ số → đến số còn lại sau khi trừ số đã dùng/xóa.
+    /// </summary>
+    public async Task<InvoiceUsageResult> InvoiceUsageAsync(DateTime from, DateTime to,
+        string? invoiceType = null, string? sign = null, string? formNo = null)
+    {
+        var dFrom = from.Date;
+        var dTo = to.Date;
+
+        // B1: các mẫu hóa đơn đang hoạt động, có ngày hiệu lực <= cuối kỳ (lọc theo loại/ký hiệu/mẫu số).
+        var templates = await db.InvoiceTemplates
+            .Where(t => t.FlagActive && t.EffDateStart <= dTo)
+            .Where(t => string.IsNullOrEmpty(invoiceType) || t.InvoiceType == invoiceType)
+            .Where(t => string.IsNullOrEmpty(sign) || t.Sign == sign)
+            .Where(t => string.IsNullOrEmpty(formNo) || t.FormNo == formNo)
+            .OrderBy(t => t.InvoiceType).ThenBy(t => t.Sign)
+            .ToListAsync();
+
+        var codes = templates.Select(t => t.TInvoiceCode).ToList();
+        var invoices = await db.Invoices
+            .Where(i => codes.Contains(i.TInvoiceCode) && i.InvoiceNo != null)
+            .ToListAsync();
+
+        var rows = new List<InvoiceUsageRow>();
+        foreach (var t in templates)
+        {
+            var mine = invoices.Where(i => i.TInvoiceCode == t.TInvoiceCode).ToList();
+
+            // ── K1: tồn đầu kỳ + phát hành trong kỳ ──
+            // Số HĐ đã lập trước đầu kỳ (dùng để tính tồn đầu kỳ).
+            var beforePeriod = mine.Where(i => i.InvoiceDate.Date < dFrom).ToList();
+            long? k1BeginStart = null, k1BeginEnd = null;
+            if (t.EffDateStart.Date < dFrom)
+            {
+                // Mẫu đã phát hành trước kỳ → tồn đầu kỳ = (max số HĐ trước kỳ + 1) → đến số của mẫu.
+                var maxBefore = beforePeriod.Any() ? beforePeriod.Max(i => i.InvoiceNo!.Value) : (long?)null;
+                k1BeginStart = maxBefore.HasValue ? maxBefore.Value + 1 : t.StartInvoiceNo;
+                k1BeginEnd = t.EndInvoiceNo;
+            }
+            // Phát hành trong kỳ: mẫu có ngày hiệu lực nằm trong kỳ.
+            long? k1InStart = null, k1InEnd = null;
+            if (t.EffDateStart.Date >= dFrom && t.EffDateStart.Date <= dTo)
+            {
+                k1InStart = t.StartInvoiceNo;
+                k1InEnd = t.EndInvoiceNo;
+            }
+            // Tổng số (5) = A + B (A = phát hành trong kỳ, B = tồn đầu kỳ).
+            long a = (k1InStart.HasValue && k1InEnd.HasValue) ? k1InEnd.Value - k1InStart.Value + 1 : 0;
+            long b = (k1BeginStart.HasValue && k1BeginEnd.HasValue) ? k1BeginEnd.Value - k1BeginStart.Value + 1 : 0;
+            var k1TongSo = a + b;
+
+            // ── K2: sử dụng / xóa bỏ trong kỳ ──
+            var inPeriod = mine.Where(i => i.InvoiceDate.Date >= dFrom && i.InvoiceDate.Date <= dTo
+                        && (i.InvoiceStatus == "ISSUED" || i.InvoiceStatus == "DELETED" || i.InvoiceStatus == "CANCELED")).ToList();
+            long? k2Start = inPeriod.Any() ? inPeriod.Min(i => i.InvoiceNo!.Value) : null;
+            long? k2End = inPeriod.Any() ? inPeriod.Max(i => i.InvoiceNo!.Value) : null;
+            var k2Total = (k2Start.HasValue && k2End.HasValue) ? k2End.Value - k2Start.Value + 1 : 0;
+            var k2Used = inPeriod.Count(i => i.InvoiceStatus == "ISSUED");
+            var deleted = inPeriod.Where(i => i.InvoiceStatus == "DELETED" || i.InvoiceStatus == "CANCELED")
+                        .OrderBy(i => i.InvoiceNo).ToList();
+            var k2Del = deleted.Count;
+            var k2ListDel = string.Join(",", deleted.Select(i => i.InvoiceNo));
+
+            // ── K3: tồn cuối kỳ ──
+            // Từ số cuối kỳ = max số HĐ đã lập (mọi kỳ) + 1; nếu chưa lập gì thì lấy từ số của mẫu.
+            var maxAll = mine.Any() ? mine.Max(i => i.InvoiceNo!.Value) : (long?)null;
+            long? k3Start = maxAll.HasValue ? maxAll.Value + 1 : t.StartInvoiceNo;
+            long? k3End = t.EndInvoiceNo;
+            var k3Remain = (k3Start.HasValue && k3End.HasValue && k3End.Value >= k3Start.Value)
+                ? k3End.Value - k3Start.Value + 1 : 0;
+
+            rows.Add(new InvoiceUsageRow(
+                t.TInvoiceCode, t.InvoiceType, t.InvoiceType, t.FormNo, t.Sign,
+                k1TongSo,
+                k1BeginStart, k1BeginEnd, k1InStart, k1InEnd,
+                k2Start, k2End, k2Total, k2Used, k2Del, k2ListDel,
+                k3Start, k3End, k3Remain));
+        }
+
+        return new InvoiceUsageResult(dFrom, dTo, rows,
+            rows.Sum(r => r.K1_TongSo), rows.Sum(r => r.K2_TotalUsed),
+            rows.Sum(r => r.K2_TotalDel), rows.Sum(r => r.K3_EndPeriod_Remain));
     }
 }
