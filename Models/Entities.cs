@@ -107,6 +107,57 @@ public class MstNnt : IOrgOwned
     public string NNTFullName { get; set; } = "";     // tên NNT
     public string NNTAddress { get; set; } = "";      // địa chỉ
     public string MSTBUPattern { get; set; } = "";    // mẫu LIKE phân quyền xem (ViewAbility)
+    public string NetworkID { get; set; } = "";       // mạng/đại lý
+    public string DLCode { get; set; } = "";          // mã đại lý
+    public string ProvinceCode { get; set; } = "";    // mã tỉnh
+    public string DistrictCode { get; set; } = "";    // mã huyện
+    public string GovTaxID { get; set; } = "";        // cơ quan thuế quản lý
+    public string NNTMobile { get; set; } = "";       // ĐT di động
+    public string NNTPhone { get; set; } = "";        // ĐT cố định
+    public string PresentBy { get; set; } = "";       // người đại diện
+    public string ContactName { get; set; } = "";     // tên người liên lạc
+    public string ContactEmail { get; set; } = "";    // email người liên hệ
+    public string RegisterStatus { get; set; } = "";  // trạng thái đăng ký
+    public bool FlagActive { get; set; } = true;
+}
+
+/// <summary>
+/// Cơ quan thuế (Mst_GovTaxID) — danh mục cơ quan thuế quản lý NNT.
+/// Dùng cho danh sách người nộp thuế (RptSv_Mst_NNT_Get).
+/// </summary>
+public class MstGovTaxId : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string GovTaxID { get; set; } = "";        // mã cơ quan thuế
+    public string GovTaxName { get; set; } = "";      // tên cơ quan thuế
+    public bool FlagActive { get; set; } = true;
+}
+
+/// <summary>
+/// Tỉnh/thành (Mst_Province) — danh mục tỉnh dùng cho địa chỉ NNT.
+/// Dùng cho danh sách người nộp thuế (RptSv_Mst_NNT_Get).
+/// </summary>
+public class MstProvince : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string ProvinceCode { get; set; } = "";    // mã tỉnh
+    public string ProvinceName { get; set; } = "";    // tên tỉnh
+    public bool FlagActive { get; set; } = true;
+}
+
+/// <summary>
+/// Quận/huyện (Mst_District) — danh mục huyện dùng cho địa chỉ NNT.
+/// Dùng cho danh sách người nộp thuế (RptSv_Mst_NNT_Get).
+/// </summary>
+public class MstDistrict : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string ProvinceCode { get; set; } = "";    // mã tỉnh
+    public string DistrictCode { get; set; } = "";    // mã huyện
+    public string DistrictName { get; set; } = "";    // tên huyện
     public bool FlagActive { get; set; } = true;
 }
 

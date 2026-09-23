@@ -1,0 +1,68 @@
+@model MstNntListResult
+@{ ViewData["Title"] = "Người nộp thuế"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-building me-1"></i>Danh sách người nộp thuế (RptSv_Mst_NNT)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">MST</label><input name="mst" value="@ViewBag.MST" class="form-control form-control-sm" placeholder="VD: 0101234567" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Tên NNT</label><input name="nntFullName" value="@ViewBag.NNTFullName" class="form-control form-control-sm" placeholder="Tên doanh nghiệp" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Cơ quan thuế (GovTaxID)</label><input name="govTaxId" value="@ViewBag.GovTaxID" class="form-control form-control-sm" placeholder="VD: CQT-HN" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Mã tỉnh (ProvinceCode)</label><input name="provinceCode" value="@ViewBag.ProvinceCode" class="form-control form-control-sm" placeholder="VD: 01" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Mã đại lý (DLCode)</label><input name="dlCode" value="@ViewBag.DLCode" class="form-control form-control-sm" placeholder="VD: DL001" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Trạng thái</label>
+            <select name="flagActive" class="form-select form-select-sm">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.FlagActive as string))">Tất cả</option>
+                <option value="1" selected="@(ViewBag.FlagActive == "1")">Đang hoạt động</option>
+                <option value="0" selected="@(ViewBag.FlagActive == "0")">Ngừng hoạt động</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Số bản ghi/trang</label><input type="number" name="recordCount" value="@ViewBag.RecordCount" class="form-control form-control-sm" min="1" /></div>
+        <div class="col-12 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Xem</button></div>
+    </form>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Danh sách người nộp thuế</h6>
+        <span class="text-muted small">@Model.TotalCount bản ghi · trang bắt đầu @Model.RecordStart</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>MST</th>
+                <th>Tên NNT</th>
+                <th>Địa chỉ</th>
+                <th>Tỉnh/Huyện</th>
+                <th>Cơ quan thuế</th>
+                <th>Mã đại lý</th>
+                <th>Đơn hàng license</th>
+                <th class="text-center">Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.MST</td>
+                <td class="small">@r.NNTFullName</td>
+                <td class="small">@(string.IsNullOrEmpty(r.NNTAddress) ? "—" : r.NNTAddress)</td>
+                <td class="small">@(string.IsNullOrEmpty(r.ProvinceName) ? r.ProvinceCode : r.ProvinceName)@(string.IsNullOrEmpty(r.DistrictName) ? "" : " / " + r.DistrictName)</td>
+                <td class="small">@(string.IsNullOrEmpty(r.GovTaxName) ? (string.IsNullOrEmpty(r.GovTaxID) ? "—" : r.GovTaxID) : r.GovTaxName)</td>
+                <td class="small">@(string.IsNullOrEmpty(r.DLCode) ? "—" : r.DLCode)</td>
+                <td class="small">@(r.InosOrderId.HasValue ? $"#{r.InosOrderId}" : "—")</td>
+                <td class="text-center">
+                    @if (r.FlagActive) { <span class="badge" style="background:#059669">Đang hoạt động</span> }
+                    else { <span class="badge bg-secondary">Ngừng hoạt động</span> }
+                </td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="9" class="text-center text-muted py-4">Không có người nộp thuế nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh sách người nộp thuế (Mst_NNT) kèm cơ quan thuế (Mst_GovTaxID), tỉnh/huyện (Mst_Province/Mst_District) và đơn hàng license (MstSv_Inos_Org), có phân trang + lọc theo MST / tên / cơ quan thuế / tỉnh / mã đại lý / trạng thái.
+    </p>
+</div></div>

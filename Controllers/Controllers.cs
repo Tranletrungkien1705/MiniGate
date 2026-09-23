@@ -211,6 +211,17 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.ObjectCode = objectCode; ViewBag.ModuleCode = moduleCode;
         return View(await svc.SysObjectInModuleListAsync(start, count, objectCode, moduleCode));
     }
+
+    public async Task<IActionResult> Nnts(int? recordStart, int? recordCount, string? mst, string? nntFullName, string? govTaxId, string? provinceCode, string? dlCode, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.MST = mst; ViewBag.NNTFullName = nntFullName; ViewBag.GovTaxID = govTaxId;
+        ViewBag.ProvinceCode = provinceCode; ViewBag.DLCode = dlCode; ViewBag.FlagActive = flagActive;
+        return View(await svc.MstNntListAsync(start, count, mst, nntFullName, govTaxId, provinceCode, dlCode, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

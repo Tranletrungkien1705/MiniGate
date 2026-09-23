@@ -195,6 +195,24 @@ public record VatRateListResult(
     List<VatRateRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách người nộp thuế (Mst_NNT) — kèm thông tin cơ quan thuế (Mst_GovTaxID),
+/// tỉnh (Mst_Province), huyện (Mst_District) và đơn hàng license (MstSv_Inos_Org).
+/// </summary>
+public record MstNntRow(
+    int Idx, string MST, string NNTFullName, string NNTAddress,
+    string NetworkID, string DLCode, string MSTBUPattern,
+    string ProvinceCode, string ProvinceName, string DistrictCode, string DistrictName,
+    string GovTaxID, string GovTaxName,
+    string NNTMobile, string NNTPhone, string PresentBy, string ContactName, string ContactEmail,
+    string RegisterStatus, bool FlagActive,
+    string InosOrgMST, long? InosOrderId);
+
+/// <summary>Kết quả danh sách người nộp thuế: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record MstNntListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<MstNntRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách đối tượng trong mô-đun (Sys_ObjectInModules) —
 /// liên kết đối tượng/chức năng (ObjectCode) ↔ mô-đun (ModuleCode) kèm thông tin cập nhật cuối.
 /// </summary>
@@ -247,6 +265,10 @@ public interface IReportService
 
     Task<SysObjectInModuleListResult> SysObjectInModuleListAsync(int recordStart = 0, int recordCount = 50,
         string? objectCode = null, string? moduleCode = null);
+
+    Task<MstNntListResult> MstNntListAsync(int recordStart = 0, int recordCount = 50,
+        string? mst = null, string? nntFullName = null, string? govTaxId = null,
+        string? provinceCode = null, string? dlCode = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -943,5 +965,67 @@ public class ReportService(AppDbContext db) : IReportService
             m.LogLUDTimeUTC, m.LogLUBy)).ToList();
 
         return new SysObjectInModuleListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách người nộp thuế (RptSv_Mst_NNT_Get) — endpoint tổng hợp: trả về danh sách NNT
+    /// (có phân trang + lọc theo MST / tên / cơ quan thuế / tỉnh / mã đại lý / trạng thái)
+    /// kèm thông tin cơ quan thuế (Mst_GovTaxID), tỉnh (Mst_Province), huyện (Mst_District)
+    /// và đơn hàng license (MstSv_Inos_Org).
+    /// Port từ RptSv_Mst_NNT_Get (MobileGate) — gộp các bảng tạm #tbl_Mst_NNT_Filter_Draft/#tbl_Mst_NNT_Filter
+    /// và khối select Mst_NNT join Mst_GovTaxID/Mst_Province/Mst_District/MstSv_Inos_Org thành truy vấn LINQ.
+    /// </summary>
+    public async Task<MstNntListResult> MstNntListAsync(int recordStart = 0, int recordCount = 50,
+        string? mst = null, string? nntFullName = null, string? govTaxId = null,
+        string? provinceCode = null, string? dlCode = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc NNT theo MST / tên / cơ quan thuế / tỉnh / mã đại lý / trạng thái
+        // (tương ứng #tbl_Mst_NNT_Filter_Draft).
+        var items = await db.MstNnts
+            .Where(n => string.IsNullOrEmpty(mst) || n.MST == mst)
+            .Where(n => string.IsNullOrEmpty(nntFullName) || n.NNTFullName.Contains(nntFullName))
+            .Where(n => string.IsNullOrEmpty(govTaxId) || n.GovTaxID == govTaxId)
+            .Where(n => string.IsNullOrEmpty(provinceCode) || n.ProvinceCode == provinceCode)
+            .Where(n => string.IsNullOrEmpty(dlCode) || n.DLCode == dlCode)
+            .Where(n => flagActive == null || n.FlagActive == flagActive)
+            .OrderBy(n => n.MST)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_NNT_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        // B3: nạp danh mục để gắn thông tin (tương ứng các left join Mst_GovTaxID/Mst_Province/Mst_District).
+        var govTaxes = await db.MstGovTaxIds.ToListAsync();
+        var govTaxByCode = govTaxes.ToDictionary(g => g.GovTaxID, g => g);
+        var provinces = await db.MstProvinces.ToListAsync();
+        var provinceByCode = provinces.ToDictionary(p => p.ProvinceCode, p => p);
+        var districts = await db.MstDistricts.ToListAsync();
+        var districtByKey = districts.ToDictionary(d => (d.ProvinceCode, d.DistrictCode), d => d);
+
+        // B4: đơn hàng license theo MST (tương ứng left join MstSv_Inos_Org).
+        var orders = await db.LicOrders.ToListAsync();
+        var orderByMst = orders.GroupBy(o => o.MST).ToDictionary(g => g.Key, g => g.First());
+
+        var rows = page.Select((n, i) =>
+        {
+            govTaxByCode.TryGetValue(n.GovTaxID, out var g);
+            provinceByCode.TryGetValue(n.ProvinceCode, out var p);
+            districtByKey.TryGetValue((n.ProvinceCode, n.DistrictCode), out var d);
+            orderByMst.TryGetValue(n.MST, out var o);
+            return new MstNntRow(
+                recordStart + i + 1, n.MST, n.NNTFullName, n.NNTAddress,
+                n.NetworkID, n.DLCode, n.MSTBUPattern,
+                n.ProvinceCode, p?.ProvinceName ?? "", n.DistrictCode, d?.DistrictName ?? "",
+                n.GovTaxID, g?.GovTaxName ?? "",
+                n.NNTMobile, n.NNTPhone, n.PresentBy, n.ContactName, n.ContactEmail,
+                n.RegisterStatus, n.FlagActive,
+                o?.MST ?? "", o?.OrderId);
+        }).ToList();
+
+        return new MstNntListResult(recordStart, recordCount, total, rows);
     }
 }

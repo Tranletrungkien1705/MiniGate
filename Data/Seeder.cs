@@ -62,8 +62,34 @@ public static class Seeder
         if (!await db.MstNnts.AnyAsync())
         {
             db.MstNnts.AddRange(
-                new MstNnt { MST = "0101234567", NNTFullName = "Công ty Demo A", NNTAddress = "Hà Nội", MSTBUPattern = "ALL.0101234567%" },
-                new MstNnt { MST = "0107654321", NNTFullName = "Công ty Demo B", NNTAddress = "TP.HCM", MSTBUPattern = "ALL.0107654321%" });
+                new MstNnt { MST = "0101234567", NNTFullName = "Công ty Demo A", NNTAddress = "Hà Nội", MSTBUPattern = "ALL.0101234567%", NetworkID = "NET-DEMO", DLCode = "DL001", ProvinceCode = "01", DistrictCode = "001", GovTaxID = "CQT-HN", NNTMobile = "0901234567", NNTPhone = "0243123456", PresentBy = "Nguyễn Văn A", ContactName = "Trần Thị B", ContactEmail = "a@demo.vn", RegisterStatus = "ACTIVE" },
+                new MstNnt { MST = "0107654321", NNTFullName = "Công ty Demo B", NNTAddress = "TP.HCM", MSTBUPattern = "ALL.0107654321%", NetworkID = "NET-DEMO", DLCode = "DL002", ProvinceCode = "79", DistrictCode = "760", GovTaxID = "CQT-HCM", NNTMobile = "0907654321", NNTPhone = "0283123456", PresentBy = "Lê Văn C", ContactName = "Phạm Thị D", ContactEmail = "b@demo.vn", RegisterStatus = "ACTIVE" },
+                new MstNnt { MST = "0109999999", NNTFullName = "Công ty Demo C (ngừng)", NNTAddress = "Đà Nẵng", MSTBUPattern = "ALL.0109999999%", NetworkID = "NET-DEMO", DLCode = "DL003", ProvinceCode = "48", DistrictCode = "490", GovTaxID = "CQT-DN", RegisterStatus = "INACTIVE", FlagActive = false });
+            await db.SaveChangesAsync();
+        }
+        // Danh mục cơ quan thuế (Mst_GovTaxID) + tỉnh (Mst_Province) + huyện (Mst_District) cho danh sách NNT.
+        if (!await db.MstGovTaxIds.AnyAsync())
+        {
+            db.MstGovTaxIds.AddRange(
+                new MstGovTaxId { GovTaxID = "CQT-HN", GovTaxName = "Cục Thuế TP Hà Nội" },
+                new MstGovTaxId { GovTaxID = "CQT-HCM", GovTaxName = "Cục Thuế TP Hồ Chí Minh" },
+                new MstGovTaxId { GovTaxID = "CQT-DN", GovTaxName = "Cục Thuế TP Đà Nẵng" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.MstProvinces.AnyAsync())
+        {
+            db.MstProvinces.AddRange(
+                new MstProvince { ProvinceCode = "01", ProvinceName = "Hà Nội" },
+                new MstProvince { ProvinceCode = "79", ProvinceName = "Hồ Chí Minh" },
+                new MstProvince { ProvinceCode = "48", ProvinceName = "Đà Nẵng" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.MstDistricts.AnyAsync())
+        {
+            db.MstDistricts.AddRange(
+                new MstDistrict { ProvinceCode = "01", DistrictCode = "001", DistrictName = "Quận Ba Đình" },
+                new MstDistrict { ProvinceCode = "79", DistrictCode = "760", DistrictName = "Quận 1" },
+                new MstDistrict { ProvinceCode = "48", DistrictCode = "490", DistrictName = "Quận Hải Châu" });
             await db.SaveChangesAsync();
         }
         if (!await db.SysUsers.AnyAsync())

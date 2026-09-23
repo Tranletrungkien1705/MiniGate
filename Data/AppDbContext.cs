@@ -16,6 +16,9 @@ public class AppDbContext : DbContext
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<InvoiceLicense> InvoiceLicenses => Set<InvoiceLicense>();
     public DbSet<MstNnt> MstNnts => Set<MstNnt>();
+    public DbSet<MstGovTaxId> MstGovTaxIds => Set<MstGovTaxId>();
+    public DbSet<MstProvince> MstProvinces => Set<MstProvince>();
+    public DbSet<MstDistrict> MstDistricts => Set<MstDistrict>();
     public DbSet<SysUser> SysUsers => Set<SysUser>();
     public DbSet<SysGroup> SysGroups => Set<SysGroup>();
     public DbSet<SysUserInGroup> SysUserInGroups => Set<SysUserInGroup>();
@@ -40,6 +43,9 @@ public class AppDbContext : DbContext
         b.Entity<Invoice>(e => { e.HasIndex(x => new { x.OrgId, x.TInvoiceCode, x.InvoiceNo }); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<InvoiceLicense>(e => { e.HasIndex(x => new { x.OrgId, x.MST }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstNnt>(e => { e.HasIndex(x => new { x.OrgId, x.MST }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<MstGovTaxId>(e => { e.HasIndex(x => new { x.OrgId, x.GovTaxID }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<MstProvince>(e => { e.HasIndex(x => new { x.OrgId, x.ProvinceCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<MstDistrict>(e => { e.HasIndex(x => new { x.OrgId, x.ProvinceCode, x.DistrictCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<SysUser>(e => { e.HasIndex(x => new { x.OrgId, x.UserCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<SysGroup>(e => { e.HasIndex(x => new { x.OrgId, x.GroupCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<SysUserInGroup>(e => { e.HasIndex(x => new { x.OrgId, x.UserCode, x.GroupCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
