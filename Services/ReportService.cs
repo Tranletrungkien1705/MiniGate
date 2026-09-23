@@ -322,6 +322,22 @@ public record NntTypeListResult(
     List<NntTypeRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách cơ quan thuế (Mst_GovTaxID) —
+/// mã/tên cơ quan thuế, cấp trên, đơn vị nghiệp vụ, tỉnh/huyện, cấp, địa chỉ, liên hệ, trạng thái.
+/// </summary>
+public record GovTaxIdRow(
+    int Idx, string GovTaxID, string NetworkID, string GovTaxIDParent,
+    string GovTaxIDBUCode, string GovTaxIDBUPattern, string ProvinceCode, string DistrictCode,
+    string GovTaxIDLevel, string GovTaxName, string Level, string Address,
+    string ContactEmail, string ContactPhone, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách cơ quan thuế: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record GovTaxIdListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<GovTaxIdRow> Rows);
+
+/// <summary>
 /// Một dòng của báo cáo tổng hợp người dùng theo đại lý (Rpt_RptSvSysUserSummary_01) —
 /// user kèm đại lý (DLCode) và xếp hạng (FlagRanking), thuộc cùng phân cấp đơn vị nghiệp vụ.
 /// </summary>
@@ -436,6 +452,10 @@ public interface IReportService
 
     Task<NntTypeListResult> NntTypeListAsync(int recordStart = 0, int recordCount = 50,
         string? nntType = null, bool? flagActive = null);
+
+    Task<GovTaxIdListResult> GovTaxIdListAsync(int recordStart = 0, int recordCount = 50,
+        string? govTaxId = null, string? govTaxName = null, string? networkId = null,
+        string? provinceCode = null, bool? flagActive = null);
 
     Task<SysUserSummaryResult> SysUserSummaryAsync(string? userCode = null);
 }
@@ -1578,5 +1598,43 @@ public class ReportService(AppDbContext db) : IReportService
             i + 1, u.UserCode, u.DLCode, u.FlagRanking)).ToList();
 
         return new SysUserSummaryResult(userCode ?? "", dealerCodes, rows, rows.Count);
+    }
+
+    /// <summary>
+    /// Danh sách cơ quan thuế (RptSv_Mst_GovTaxID_Get) — endpoint tổng hợp: trả về danh mục
+    /// cơ quan thuế (mã/tên/cấp trên/đơn vị nghiệp vụ/tỉnh-huyện/cấp/địa chỉ/liên hệ/trạng thái),
+    /// có phân trang + lọc theo mã cơ quan thuế / tên / mạng-đại lý / tỉnh / trạng thái.
+    /// Port từ RptSv_Mst_GovTaxID_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Mst_GovTaxID_Filter_Draft/#tbl_Mst_GovTaxID_Filter và khối select Mst_GovTaxID thành LINQ.
+    /// </summary>
+    public async Task<GovTaxIdListResult> GovTaxIdListAsync(int recordStart = 0, int recordCount = 50,
+        string? govTaxId = null, string? govTaxName = null, string? networkId = null,
+        string? provinceCode = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc cơ quan thuế theo mã / tên / mạng-đại lý / tỉnh / trạng thái (tương ứng #tbl_Mst_GovTaxID_Filter_Draft).
+        var items = await db.MstGovTaxIds
+            .Where(g => string.IsNullOrEmpty(govTaxId) || g.GovTaxID == govTaxId)
+            .Where(g => string.IsNullOrEmpty(govTaxName) || g.GovTaxName.Contains(govTaxName))
+            .Where(g => string.IsNullOrEmpty(networkId) || g.NetworkID == networkId)
+            .Where(g => string.IsNullOrEmpty(provinceCode) || g.ProvinceCode == provinceCode)
+            .Where(g => flagActive == null || g.FlagActive == flagActive)
+            .OrderBy(g => g.GovTaxID)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_GovTaxID_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((g, i) => new GovTaxIdRow(
+            recordStart + i + 1, g.GovTaxID, g.NetworkID, g.GovTaxIDParent,
+            g.GovTaxIDBUCode, g.GovTaxIDBUPattern, g.ProvinceCode, g.DistrictCode,
+            g.GovTaxIDLevel, g.GovTaxName, g.Level, g.Address,
+            g.ContactEmail, g.ContactPhone, g.FlagActive,
+            g.LogLUDTimeUTC, g.LogLUBy)).ToList();
+
+        return new GovTaxIdListResult(recordStart, recordCount, total, rows);
     }
 }

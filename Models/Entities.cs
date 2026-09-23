@@ -141,15 +141,28 @@ public class MstGovIdType : IOrgOwned
 
 /// <summary>
 /// Cơ quan thuế (Mst_GovTaxID) — danh mục cơ quan thuế quản lý NNT.
-/// Dùng cho danh sách người nộp thuế (RptSv_Mst_NNT_Get).
+/// Dùng cho danh sách người nộp thuế (RptSv_Mst_NNT_Get) và danh sách cơ quan thuế (RptSv_Mst_GovTaxID_Get).
 /// </summary>
 public class MstGovTaxId : IOrgOwned
 {
     public int Id { get; set; }
     public Guid OrgId { get; set; }
     public string GovTaxID { get; set; } = "";        // mã cơ quan thuế
+    public string NetworkID { get; set; } = "";       // mạng/đại lý
+    public string GovTaxIDParent { get; set; } = "";  // mã cơ quan thuế cấp trên
+    public string GovTaxIDBUCode { get; set; } = "";  // mã đơn vị nghiệp vụ (GovTaxIDBUCode)
+    public string GovTaxIDBUPattern { get; set; } = ""; // mẫu LIKE đơn vị nghiệp vụ (GovTaxIDBUPattern)
+    public string ProvinceCode { get; set; } = "";    // mã tỉnh
+    public string DistrictCode { get; set; } = "";    // mã huyện
+    public string GovTaxIDLevel { get; set; } = "";   // cấp cơ quan thuế (GovTaxIDLevel)
     public string GovTaxName { get; set; } = "";      // tên cơ quan thuế
+    public string Level { get; set; } = "";           // cấp (Level)
+    public string Address { get; set; } = "";         // địa chỉ
+    public string ContactEmail { get; set; } = "";    // email liên hệ
+    public string ContactPhone { get; set; } = "";    // điện thoại liên hệ
     public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
 
 /// <summary>

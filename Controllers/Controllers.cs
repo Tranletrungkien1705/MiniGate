@@ -319,6 +319,17 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.UserCode = userCode;
         return View(await svc.SysUserSummaryAsync(userCode));
     }
+
+    public async Task<IActionResult> GovTaxIds(int? recordStart, int? recordCount, string? govTaxId, string? govTaxName, string? networkId, string? provinceCode, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.GovTaxID = govTaxId; ViewBag.GovTaxName = govTaxName;
+        ViewBag.NetworkID = networkId; ViewBag.ProvinceCode = provinceCode; ViewBag.FlagActive = flagActive;
+        return View(await svc.GovTaxIdListAsync(start, count, govTaxId, govTaxName, networkId, provinceCode, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

@@ -67,13 +67,17 @@ public static class Seeder
                 new MstNnt { MST = "0109999999", NNTFullName = "Công ty Demo C (ngừng)", NNTAddress = "Đà Nẵng", MSTBUPattern = "ALL.0109999999%", NetworkID = "NET-DEMO", DLCode = "DL003", ProvinceCode = "48", DistrictCode = "490", GovTaxID = "CQT-DN", RegisterStatus = "INACTIVE", FlagActive = false });
             await db.SaveChangesAsync();
         }
-        // Danh mục cơ quan thuế (Mst_GovTaxID) + tỉnh (Mst_Province) + huyện (Mst_District) cho danh sách NNT.
+        // Danh mục cơ quan thuế (Mst_GovTaxID) + tỉnh (Mst_Province) + huyện (Mst_District) cho danh sách NNT
+        // và danh sách cơ quan thuế (RptSv_Mst_GovTaxID_Get).
         if (!await db.MstGovTaxIds.AnyAsync())
         {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
             db.MstGovTaxIds.AddRange(
-                new MstGovTaxId { GovTaxID = "CQT-HN", GovTaxName = "Cục Thuế TP Hà Nội" },
-                new MstGovTaxId { GovTaxID = "CQT-HCM", GovTaxName = "Cục Thuế TP Hồ Chí Minh" },
-                new MstGovTaxId { GovTaxID = "CQT-DN", GovTaxName = "Cục Thuế TP Đà Nẵng" });
+                new MstGovTaxId { GovTaxID = "CQT-HN", NetworkID = "NET-DEMO", GovTaxIDParent = "", GovTaxIDBUCode = "IDOCNET.CQT.HN", GovTaxIDBUPattern = "IDOCNET.CQT.HN%", ProvinceCode = "01", DistrictCode = "001", GovTaxIDLevel = "1", GovTaxName = "Cục Thuế TP Hà Nội", Level = "1", Address = "Số 1 Phố Liễu Giai, Ba Đình, Hà Nội", ContactEmail = "cqt.hn@gdt.gov.vn", ContactPhone = "0243123456", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstGovTaxId { GovTaxID = "CQT-HCM", NetworkID = "NET-DEMO", GovTaxIDParent = "", GovTaxIDBUCode = "IDOCNET.CQT.HCM", GovTaxIDBUPattern = "IDOCNET.CQT.HCM%", ProvinceCode = "79", DistrictCode = "760", GovTaxIDLevel = "1", GovTaxName = "Cục Thuế TP Hồ Chí Minh", Level = "1", Address = "Số 2 Phố Nguyễn Thị Minh Khai, Quận 1, TP.HCM", ContactEmail = "cqt.hcm@gdt.gov.vn", ContactPhone = "0283123456", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstGovTaxId { GovTaxID = "CQT-DN", NetworkID = "NET-DEMO", GovTaxIDParent = "", GovTaxIDBUCode = "IDOCNET.CQT.DN", GovTaxIDBUPattern = "IDOCNET.CQT.DN%", ProvinceCode = "48", DistrictCode = "490", GovTaxIDLevel = "1", GovTaxName = "Cục Thuế TP Đà Nẵng", Level = "1", Address = "Số 3 Đường Bạch Đằng, Hải Châu, Đà Nẵng", ContactEmail = "cqt.dn@gdt.gov.vn", ContactPhone = "0236123456", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstGovTaxId { GovTaxID = "CQT-HN-BD", NetworkID = "NET-DEMO", GovTaxIDParent = "CQT-HN", GovTaxIDBUCode = "IDOCNET.CQT.HN.BD", GovTaxIDBUPattern = "IDOCNET.CQT.HN.BD%", ProvinceCode = "01", DistrictCode = "001", GovTaxIDLevel = "2", GovTaxName = "Chi cục Thuế Quận Ba Đình", Level = "2", Address = "Quận Ba Đình, Hà Nội", ContactEmail = "cct.badinh@gdt.gov.vn", ContactPhone = "0243123400", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstGovTaxId { GovTaxID = "CQT-CU", NetworkID = "NET-DEMO", GovTaxIDParent = "", GovTaxIDBUCode = "IDOCNET.CQT.CU", GovTaxIDBUPattern = "IDOCNET.CQT.CU%", ProvinceCode = "99", DistrictCode = "", GovTaxIDLevel = "1", GovTaxName = "Cục Thuế cũ (ngừng)", Level = "1", Address = "Không còn sử dụng", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
         // Danh mục loại giấy tờ (Mst_GovIDType) cho danh sách loại giấy tờ (RptSv_Mst_GovIDType_Get).
