@@ -111,9 +111,9 @@ public static class Seeder
         if (!await db.SysUsers.AnyAsync())
         {
             db.SysUsers.AddRange(
-                new SysUser { UserCode = "admin", UserName = "Quản trị hệ thống", UserNick = "admin", BankCode = "VCB", MST = "0101234567", FlagSysAdmin = true },
-                new SysUser { UserCode = "nnt_a", UserName = "Kế toán Demo A", UserNick = "ketoan_a", BankCode = "VCB", MST = "0101234567", FlagSysAdmin = false },
-                new SysUser { UserCode = "nnt_b", UserName = "Kế toán Demo B", UserNick = "ketoan_b", BankCode = "TCB", MST = "0107654321", FlagSysAdmin = false, FlagDLAdmin = true });
+                new SysUser { UserCode = "admin", UserName = "Quản trị hệ thống", UserNick = "admin", BankCode = "VCB", MST = "0101234567", DLCode = "DL000", FlagSysAdmin = true, FlagRanking = "A" },
+                new SysUser { UserCode = "nnt_a", UserName = "Kế toán Demo A", UserNick = "ketoan_a", BankCode = "VCB", MST = "0101234567", DLCode = "DL001", FlagSysAdmin = false, FlagRanking = "B" },
+                new SysUser { UserCode = "nnt_b", UserName = "Kế toán Demo B", UserNick = "ketoan_b", BankCode = "TCB", MST = "0107654321", DLCode = "DL002", FlagSysAdmin = false, FlagDLAdmin = true, FlagRanking = "C" });
             await db.SaveChangesAsync();
         }
         // Nhóm quyền (Sys_Group) + thành viên nhóm (RptSv_Sys_UserInGroup) cho danh sách người dùng.
@@ -233,6 +233,7 @@ public static class Seeder
         {
             var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
             db.MstDealers.AddRange(
+                new MstDealer { DLCode = "DL000", NetworkID = "NET-DEMO", DLCodeParent = "", DLBUCode = "IDOCNET.VPBANK", DLBUPattern = "IDOCNET.VPBANK%", DLLevel = "0", DLType = "VP", ProvinceCode = "01", DLName = "Văn phòng đại diện VPBANK", DLAddress = "Hà Nội", DLPresentBy = "Nguyễn Văn A", DLGovIDNumber = "001199000000", DLEmail = "vp@demo.vn", DLPhoneNo = "0900000000", LogLUDTimeUTC = upd, LogLUBy = "admin" },
                 new MstDealer { DLCode = "DL001", NetworkID = "NET-DEMO", DLCodeParent = "VPBANK", DLBUCode = "IDOCNET.VPBANK.DL001", DLBUPattern = "IDOCNET.VPBANK.DL001%", DLLevel = "1", DLType = "CAP1", ProvinceCode = "01", DLName = "Đại lý Hà Nội", DLAddress = "Quận Ba Đình, Hà Nội", DLPresentBy = "Nguyễn Văn A", DLGovIDNumber = "001199001234", DLEmail = "dl001@demo.vn", DLPhoneNo = "0901234567", LogLUDTimeUTC = upd, LogLUBy = "admin" },
                 new MstDealer { DLCode = "DL002", NetworkID = "NET-DEMO", DLCodeParent = "VPBANK", DLBUCode = "IDOCNET.VPBANK.DL002", DLBUPattern = "IDOCNET.VPBANK.DL002%", DLLevel = "2", DLType = "CAP2", ProvinceCode = "79", DLName = "Đại lý Hồ Chí Minh", DLAddress = "Quận 1, TP.HCM", DLPresentBy = "Lê Văn C", DLGovIDNumber = "079199002345", DLEmail = "dl002@demo.vn", DLPhoneNo = "0907654321", LogLUDTimeUTC = upd, LogLUBy = "admin" },
                 new MstDealer { DLCode = "DL003", NetworkID = "NET-DEMO", DLCodeParent = "VPBANK", DLBUCode = "IDOCNET.VPBANK.DL003", DLBUPattern = "IDOCNET.VPBANK.DL003%", DLLevel = "2", DLType = "CAP2", ProvinceCode = "48", DLName = "Đại lý Đà Nẵng (ngừng)", DLAddress = "Quận Hải Châu, Đà Nẵng", DLPresentBy = "Trần Thị D", DLGovIDNumber = "048199003456", DLEmail = "dl003@demo.vn", DLPhoneNo = "0909999999", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });

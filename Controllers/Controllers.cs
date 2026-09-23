@@ -313,6 +313,12 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.NNTType = nntType; ViewBag.FlagActive = flagActive;
         return View(await svc.NntTypeListAsync(start, count, nntType, active));
     }
+
+    public async Task<IActionResult> UserSummary(string? userCode)
+    {
+        ViewBag.UserCode = userCode;
+        return View(await svc.SysUserSummaryAsync(userCode));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

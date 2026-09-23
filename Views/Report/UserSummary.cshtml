@@ -1,0 +1,56 @@
+@model SysUserSummaryResult
+@{ ViewData["Title"] = "Tổng hợp người dùng theo đại lý"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-diagram-2 me-1"></i>Tổng hợp người dùng theo đại lý (Rpt_RptSvSysUserSummary_01)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Mã user</label><input name="userCode" value="@ViewBag.UserCode" class="form-control form-control-sm" placeholder="VD: nnt_a (để trống = tất cả)" /></div>
+        <div class="col-12 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search me-1"></i>Tổng hợp</button></div>
+    </form>
+</div></div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">User lọc theo</div><div class="stat-num" style="font-size:20px">@(string.IsNullOrEmpty(Model.UserCode) ? "Tất cả" : Model.UserCode)</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Đại lý cùng nhánh</div><div class="stat-num" style="color:#047857">@Model.DealerCodes.Count</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tổng số user</div><div class="stat-num" style="color:#059669">@Model.TotalUsers</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Đang hiển thị</div><div class="stat-num">@Model.Rows.Count</div></div></div></div>
+</div>
+
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-2">Đại lý cùng phân cấp đơn vị nghiệp vụ</h6>
+    @if (Model.DealerCodes.Count == 0) { <span class="text-muted small">—</span> }
+    else { @foreach (var c in Model.DealerCodes) { <span class="badge bg-light text-dark me-1" style="font-family:monospace">@c</span> } }
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Người dùng theo đại lý</h6>
+        <span class="text-muted small">@Model.Rows.Count bản ghi</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Mã user</th>
+                <th>Mã đại lý (DLCode)</th>
+                <th>Xếp hạng (FlagRanking)</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.UserCode</td>
+                <td class="small" style="font-family:monospace">@(string.IsNullOrEmpty(r.DLCode) ? "—" : r.DLCode)</td>
+                <td class="small">@(string.IsNullOrEmpty(r.FlagRanking) ? "—" : r.FlagRanking)</td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="4" class="text-center text-muted py-4">Không có người dùng nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: từ user (theo UserCode) → lấy đại lý (Mst_Dealer) → tìm mọi đại lý cùng nhánh đơn vị nghiệp vụ (DLBUCode LIKE DLBUPattern) → trả về user thuộc các đại lý đó kèm xếp hạng.
+    </p>
+</div></div>

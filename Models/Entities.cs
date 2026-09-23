@@ -194,8 +194,10 @@ public class SysUser : IOrgOwned
     public string UserNick { get; set; } = "";        // biệt danh (UserNick)
     public string BankCode { get; set; } = "";        // mã ngân hàng (BankCode)
     public string MST { get; set; } = "";             // MST của user (gắn tới Mst_NNT)
+    public string DLCode { get; set; } = "";          // mã đại lý của user (gắn tới Mst_Dealer)
     public bool FlagSysAdmin { get; set; }            // quản trị hệ thống → xem tất cả
     public bool FlagDLAdmin { get; set; }             // quản trị đại lý (FlagDLAdmin)
+    public string FlagRanking { get; set; } = "";     // xếp hạng user (FlagRanking)
     public bool FlagActive { get; set; } = true;
 }
 

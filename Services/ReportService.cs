@@ -322,6 +322,18 @@ public record NntTypeListResult(
     List<NntTypeRow> Rows);
 
 /// <summary>
+/// Một dòng của báo cáo tổng hợp người dùng theo đại lý (Rpt_RptSvSysUserSummary_01) —
+/// user kèm đại lý (DLCode) và xếp hạng (FlagRanking), thuộc cùng phân cấp đơn vị nghiệp vụ.
+/// </summary>
+public record SysUserSummaryRow(
+    int Idx, string UserCode, string DLCode, string FlagRanking);
+
+/// <summary>Kết quả báo cáo tổng hợp người dùng theo đại lý: các dòng + số liệu cộng dồn.</summary>
+public record SysUserSummaryResult(
+    string UserCode, List<string> DealerCodes,
+    List<SysUserSummaryRow> Rows, long TotalUsers);
+
+/// <summary>
 /// Một dòng của danh sách người nộp thuế (Mst_NNT) — kèm thông tin cơ quan thuế (Mst_GovTaxID),
 /// tỉnh (Mst_Province), huyện (Mst_District) và đơn hàng license (MstSv_Inos_Org).
 /// </summary>
@@ -424,6 +436,8 @@ public interface IReportService
 
     Task<NntTypeListResult> NntTypeListAsync(int recordStart = 0, int recordCount = 50,
         string? nntType = null, bool? flagActive = null);
+
+    Task<SysUserSummaryResult> SysUserSummaryAsync(string? userCode = null);
 }
 
 /// <summary>
@@ -1516,5 +1530,53 @@ public class ReportService(AppDbContext db) : IReportService
             t.LogLUDTimeUTC, t.LogLUBy)).ToList();
 
         return new NntTypeListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Báo cáo tổng hợp người dùng theo đại lý (Rpt_RptSvSysUserSummary_01) — endpoint tổng hợp:
+    /// từ một user (theo UserCode), tìm các đại lý cùng PHÂN CẤP ĐƠN VỊ NGHIỆP VỤ rồi trả về
+    /// danh sách user thuộc các đại lý đó kèm xếp hạng (FlagRanking).
+    /// Port từ Rpt_RptSvSysUserSummary_01 (MobileGate) — gộp các bảng tạm
+    /// #tblFilter/#tbl_Mst_Dealer_Filter/#tbl_Mst_Dealer_FilterAll thành truy vấn LINQ:
+    ///   B1: lọc user theo UserCode → lấy DLCode của họ.
+    ///   B2: lấy DLBUCode/DLBUPattern của các đại lý đó.
+    ///   B3: tìm mọi đại lý có DLBUCode khớp mẫu DLBUPattern (LIKE) → cùng nhánh đơn vị nghiệp vụ.
+    ///   B4: trả về user có DLCode nằm trong tập đại lý trên.
+    /// </summary>
+    public async Task<SysUserSummaryResult> SysUserSummaryAsync(string? userCode = null)
+    {
+        // B1: lọc user theo mã (tương ứng #tblFilter).
+        var users = await db.SysUsers
+            .Where(u => string.IsNullOrEmpty(userCode) || u.UserCode == userCode)
+            .ToListAsync();
+        var filterDlCodes = users.Select(u => u.DLCode).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+
+        // B2: lấy DLBUCode/DLBUPattern của các đại lý thuộc user đã lọc (tương ứng #tbl_Mst_Dealer_Filter).
+        var dealers = await db.MstDealers.ToListAsync();
+        var filterDealers = dealers.Where(d => filterDlCodes.Contains(d.DLCode)).ToList();
+
+        // B3: tìm mọi đại lý có DLBUCode khớp mẫu DLBUPattern (LIKE) → cùng nhánh đơn vị nghiệp vụ
+        // (tương ứng #tbl_Mst_Dealer_FilterAll).
+        var dealerCodes = new List<string>();
+        foreach (var f in filterDealers)
+        {
+            var prefix = f.DLBUPattern.Contains('%') ? f.DLBUPattern[..f.DLBUPattern.IndexOf('%')] : f.DLBUPattern;
+            dealerCodes.AddRange(dealers
+                .Where(d => d.DLBUCode.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                .Select(d => d.DLCode));
+        }
+        dealerCodes = dealerCodes.Distinct().OrderBy(c => c).ToList();
+
+        // B4: trả về user có DLCode nằm trong tập đại lý trên (tương ứng khối select RptSv_Sys_User join #tbl_Mst_Dealer_FilterAll).
+        var allUsers = await db.SysUsers.ToListAsync();
+        var matched = allUsers
+            .Where(u => dealerCodes.Contains(u.DLCode))
+            .OrderBy(u => u.UserCode)
+            .ToList();
+
+        var rows = matched.Select((u, i) => new SysUserSummaryRow(
+            i + 1, u.UserCode, u.DLCode, u.FlagRanking)).ToList();
+
+        return new SysUserSummaryResult(userCode ?? "", dealerCodes, rows, rows.Count);
     }
 }
