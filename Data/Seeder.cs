@@ -407,6 +407,18 @@ public static class Seeder
                 new MstDepartment { DepartmentCode = "PB004", NetworkID = "NET-DEMO", DepartmentCodeParent = "PB000", DepartmentBUCode = "IDOCNET.PB000.PB004", DepartmentBUPattern = "IDOCNET.PB000.PB004%", DepartmentLevel = 1, MST = "0109999", DepartmentName = "Phòng cũ (ngừng)", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục gói dịch vụ (OS_Inos_Package) cho danh sách gói dịch vụ (RptSv_OS_Inos_Package_Get).
+        if (!await db.InosPackages.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.InosPackages.AddRange(
+                new InosPackage { PackageId = 1, Name = "Gói HDDT 1 năm", LicenseType = "YEAR", Subscription = "12 tháng", Price = 10_000_000m, ImageUrl = "https://cdn.demo.vn/pkg1.png", IntroUrl = "https://demo.vn/pkg1", Description = "Gói hóa đơn điện tử 1 năm", Detail = "Bao gồm 1 mẫu hóa đơn, 100.000 số", IsDiscountable = true, LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new InosPackage { PackageId = 2, Name = "Gói HDDT 6 tháng", LicenseType = "HALF_YEAR", Subscription = "6 tháng", Price = 5_000_000m, ImageUrl = "https://cdn.demo.vn/pkg2.png", IntroUrl = "https://demo.vn/pkg2", Description = "Gói hóa đơn điện tử 6 tháng", Detail = "Bao gồm 1 mẫu hóa đơn, 50.000 số", IsDiscountable = true, LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new InosPackage { PackageId = 3, Name = "Gói HDDT 2 năm", LicenseType = "YEAR", Subscription = "24 tháng", Price = 20_000_000m, ImageUrl = "https://cdn.demo.vn/pkg3.png", IntroUrl = "https://demo.vn/pkg3", Description = "Gói hóa đơn điện tử 2 năm", Detail = "Bao gồm 3 mẫu hóa đơn, 300.000 số", IsDiscountable = true, LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new InosPackage { PackageId = 4, Name = "Gói dùng thử", LicenseType = "TRIAL", Subscription = "1 tháng", Price = 0m, ImageUrl = "https://cdn.demo.vn/pkg4.png", IntroUrl = "https://demo.vn/pkg4", Description = "Gói dùng thử miễn phí", Detail = "Giới hạn 100 số hóa đơn", IsDiscountable = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new InosPackage { PackageId = 5, Name = "Gói cũ (ngừng)", LicenseType = "YEAR", Subscription = "12 tháng", Price = 8_000_000m, ImageUrl = "", IntroUrl = "", Description = "Gói không còn bán", Detail = "Ngừng kinh doanh", IsDiscountable = false, FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

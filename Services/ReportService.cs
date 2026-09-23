@@ -384,6 +384,21 @@ public record DepartmentListResult(
     List<DepartmentRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách gói dịch vụ (OS_Inos_Package) —
+/// tên gói, loại license, kỳ thuê bao, giá, mô tả/chi tiết, cờ chiết khấu, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record InosPackageRow(
+    int Idx, long PackageId, string Name, string LicenseType, string Subscription,
+    decimal Price, string ImageUrl, string IntroUrl, string Description, string Detail,
+    bool IsDiscountable, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách gói dịch vụ: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record InosPackageListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<InosPackageRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách giải pháp hệ thống (Sys_Solution) —
 /// mã/tên giải pháp, mạng-đại lý, trạng thái và thông tin cập nhật cuối.
 /// </summary>
@@ -566,6 +581,9 @@ public interface IReportService
     Task<DepartmentListResult> DepartmentListAsync(int recordStart = 0, int recordCount = 50,
         string? departmentCode = null, string? departmentName = null, string? mst = null,
         string? departmentCodeParent = null, bool? flagActive = null);
+
+    Task<InosPackageListResult> InosPackageListAsync(int recordStart = 0, int recordCount = 50,
+        string? name = null, string? licenseType = null, bool? isDiscountable = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1959,5 +1977,37 @@ public class ReportService(AppDbContext db) : IReportService
             d.DepartmentName, d.FlagActive, d.LogLUDTimeUTC, d.LogLUBy)).ToList();
 
         return new DepartmentListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách gói dịch vụ (RptSv_OS_Inos_Package_Get) — endpoint tổng hợp: trả về danh mục gói/bản quyền
+    /// phần mềm iNOS (có phân trang + lọc theo tên gói / loại license / cờ chiết khấu / trạng thái).
+    /// Port từ RptSv_OS_Inos_Package_Get (MobileGate) — gộp khối select OS_Inos_Package thành truy vấn LINQ.
+    /// </summary>
+    public async Task<InosPackageListResult> InosPackageListAsync(int recordStart = 0, int recordCount = 50,
+        string? name = null, string? licenseType = null, bool? isDiscountable = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc gói theo tên / loại license / cờ chiết khấu / trạng thái.
+        var items = await db.InosPackages
+            .Where(p => string.IsNullOrEmpty(name) || p.Name.Contains(name))
+            .Where(p => string.IsNullOrEmpty(licenseType) || p.LicenseType == licenseType)
+            .Where(p => isDiscountable == null || p.IsDiscountable == isDiscountable)
+            .Where(p => flagActive == null || p.FlagActive == flagActive)
+            .OrderBy(p => p.PackageId)
+            .ToListAsync();
+
+        // B2: phân trang.
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((p, i) => new InosPackageRow(
+            recordStart + i + 1, p.PackageId, p.Name, p.LicenseType, p.Subscription,
+            p.Price, p.ImageUrl, p.IntroUrl, p.Description, p.Detail,
+            p.IsDiscountable, p.FlagActive, p.LogLUDTimeUTC, p.LogLUBy)).ToList();
+
+        return new InosPackageListResult(recordStart, recordCount, total, rows);
     }
 }

@@ -714,3 +714,26 @@ public class MstDepartment : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }              // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";               // người cập nhật cuối
 }
+/// <summary>
+/// Gói dịch vụ (OS_Inos_Package) — danh mục gói/bản quyền phần mềm trong hệ sinh thái iNOS,
+/// kèm giá, loại license, kỳ thuê bao và cờ cho phép chiết khấu.
+/// Dùng cho danh sách gói dịch vụ (RptSv_OS_Inos_Package_Get).
+/// </summary>
+public class InosPackage : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public long PackageId { get; set; }               // id gói (Id)
+    public string Name { get; set; } = "";            // tên gói
+    public string LicenseType { get; set; } = "";     // loại license (LicenseType)
+    public string Subscription { get; set; } = "";    // kỳ thuê bao (Subscription)
+    public decimal Price { get; set; }                // giá gói (Price)
+    public string ImageUrl { get; set; } = "";        // ảnh minh họa (ImageUrl)
+    public string IntroUrl { get; set; } = "";        // link giới thiệu (IntroUrl)
+    public string Description { get; set; } = "";     // mô tả ngắn (Description)
+    public string Detail { get; set; } = "";          // chi tiết gói (Detail)
+    public bool IsDiscountable { get; set; }          // cho phép chiết khấu (IsDiscountable)
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}

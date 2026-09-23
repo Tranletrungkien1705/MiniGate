@@ -393,6 +393,17 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.MST = mst; ViewBag.DepartmentCodeParent = departmentCodeParent; ViewBag.FlagActive = flagActive;
         return View(await svc.DepartmentListAsync(start, count, departmentCode, departmentName, mst, departmentCodeParent, active));
     }
+
+    public async Task<IActionResult> Packages(int? recordStart, int? recordCount, string? name, string? licenseType, string? isDiscountable, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        bool? discountable = isDiscountable switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.Name = name; ViewBag.LicenseType = licenseType; ViewBag.IsDiscountable = isDiscountable; ViewBag.FlagActive = flagActive;
+        return View(await svc.InosPackageListAsync(start, count, name, licenseType, discountable, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller
