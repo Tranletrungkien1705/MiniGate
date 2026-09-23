@@ -42,6 +42,7 @@ public class AppDbContext : DbContext
     public DbSet<InosMstBizField> InosMstBizFields => Set<InosMstBizField>();
     public DbSet<InosMstBizSize> InosMstBizSizes => Set<InosMstBizSize>();
     public DbSet<MstSvInosOrg> MstSvInosOrgs => Set<MstSvInosOrg>();
+    public DbSet<MstSvMstNetwork> MstSvMstNetworks => Set<MstSvMstNetwork>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -80,6 +81,7 @@ public class AppDbContext : DbContext
         b.Entity<InosMstBizField>(e => { e.HasIndex(x => new { x.OrgId, x.BizFieldCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<InosMstBizSize>(e => { e.HasIndex(x => new { x.OrgId, x.BizSizeCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstSvInosOrg>(e => { e.HasIndex(x => new { x.OrgId, x.MST, x.InosId }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<MstSvMstNetwork>(e => { e.HasIndex(x => new { x.OrgId, x.NetworkID }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

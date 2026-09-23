@@ -296,6 +296,21 @@ public record InosOrgListResult(
     List<InosOrgRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách mạng/đại lý (MstSv_Mst_Network) —
+/// mã/tên mạng, nhóm mạng, các địa chỉ kết nối (Core/Ping/XSys/WS/DB), MST, trạng thái.
+/// </summary>
+public record MstNetworkRow(
+    int Idx, string NetworkID, string NetworkName, string GroupNetworkID,
+    string CoreAddr, string PingAddr, string XSysAddr, string WSUrlAddr, string DBUrlAddr,
+    string MST, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách mạng/đại lý: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record MstNetworkListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<MstNetworkRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách giải pháp hệ thống (Sys_Solution) —
 /// mã/tên giải pháp, mạng-đại lý, trạng thái và thông tin cập nhật cuối.
 /// </summary>
@@ -458,6 +473,10 @@ public interface IReportService
         string? provinceCode = null, bool? flagActive = null);
 
     Task<SysUserSummaryResult> SysUserSummaryAsync(string? userCode = null);
+
+    Task<MstNetworkListResult> MstNetworkListAsync(int recordStart = 0, int recordCount = 50,
+        string? networkId = null, string? networkName = null, string? groupNetworkId = null,
+        string? mst = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1636,5 +1655,42 @@ public class ReportService(AppDbContext db) : IReportService
             g.LogLUDTimeUTC, g.LogLUBy)).ToList();
 
         return new GovTaxIdListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách mạng/đại lý (MstSv_Mst_Network_Get) — endpoint tổng hợp: trả về danh mục mạng lưới
+    /// kết nối (mã/tên mạng, nhóm mạng, các địa chỉ Core/Ping/XSys/WS/DB, MST, trạng thái),
+    /// có phân trang + lọc theo mã mạng / tên / nhóm mạng / MST / trạng thái.
+    /// Port từ MstSv_Mst_Network_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_MstSv_Mst_Network_Filter_Draft/#tbl_MstSv_Mst_Network_Filter và khối select MstSv_Mst_Network thành LINQ.
+    /// </summary>
+    public async Task<MstNetworkListResult> MstNetworkListAsync(int recordStart = 0, int recordCount = 50,
+        string? networkId = null, string? networkName = null, string? groupNetworkId = null,
+        string? mst = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc mạng theo mã / tên / nhóm mạng / MST / trạng thái (tương ứng #tbl_MstSv_Mst_Network_Filter_Draft).
+        var items = await db.MstSvMstNetworks
+            .Where(n => string.IsNullOrEmpty(networkId) || n.NetworkID == networkId)
+            .Where(n => string.IsNullOrEmpty(networkName) || n.NetworkName.Contains(networkName))
+            .Where(n => string.IsNullOrEmpty(groupNetworkId) || n.GroupNetworkID == groupNetworkId)
+            .Where(n => string.IsNullOrEmpty(mst) || n.MST == mst)
+            .Where(n => flagActive == null || n.FlagActive == flagActive)
+            .OrderBy(n => n.NetworkID)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_MstSv_Mst_Network_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((n, i) => new MstNetworkRow(
+            recordStart + i + 1, n.NetworkID, n.NetworkName, n.GroupNetworkID,
+            n.CoreAddr, n.PingAddr, n.XSysAddr, n.WSUrlAddr, n.DBUrlAddr,
+            n.MST, n.FlagActive,
+            n.LogLUDTimeUTC, n.LogLUBy)).ToList();
+
+        return new MstNetworkListResult(recordStart, recordCount, total, rows);
     }
 }

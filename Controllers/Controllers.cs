@@ -330,6 +330,17 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.NetworkID = networkId; ViewBag.ProvinceCode = provinceCode; ViewBag.FlagActive = flagActive;
         return View(await svc.GovTaxIdListAsync(start, count, govTaxId, govTaxName, networkId, provinceCode, active));
     }
+
+    public async Task<IActionResult> Networks(int? recordStart, int? recordCount, string? networkId, string? networkName, string? groupNetworkId, string? mst, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.NetworkID = networkId; ViewBag.NetworkName = networkName;
+        ViewBag.GroupNetworkID = groupNetworkId; ViewBag.MST = mst; ViewBag.FlagActive = flagActive;
+        return View(await svc.MstNetworkListAsync(start, count, networkId, networkName, groupNetworkId, mst, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

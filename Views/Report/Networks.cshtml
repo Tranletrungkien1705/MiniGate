@@ -1,0 +1,73 @@
+@model MstNetworkListResult
+@{ ViewData["Title"] = "Danh sách mạng/đại lý"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-diagram-2 me-1"></i>Danh sách mạng/đại lý (MstSv_Mst_Network)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Mã mạng (NetworkID)</label><input name="networkId" value="@ViewBag.NetworkID" class="form-control form-control-sm" placeholder="VD: NET-DEMO" /></div>
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Tên mạng</label><input name="networkName" value="@ViewBag.NetworkName" class="form-control form-control-sm" placeholder="VD: Mạng" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Nhóm mạng</label><input name="groupNetworkId" value="@ViewBag.GroupNetworkID" class="form-control form-control-sm" placeholder="VD: GRP-NET" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">MST</label><input name="mst" value="@ViewBag.MST" class="form-control form-control-sm" placeholder="MST NNT" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Trạng thái</label>
+            <select name="flagActive" class="form-select form-select-sm">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.FlagActive as string))">Tất cả</option>
+                <option value="1" selected="@(ViewBag.FlagActive == "1")">Đang hoạt động</option>
+                <option value="0" selected="@(ViewBag.FlagActive == "0")">Ngừng hoạt động</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-1"><label class="form-label small mb-1">Số/trang</label><input type="number" name="recordCount" value="@ViewBag.RecordCount" class="form-control form-control-sm" min="1" /></div>
+        <div class="col-12 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Xem</button></div>
+    </form>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Danh sách mạng/đại lý</h6>
+        <span class="text-muted small">@Model.TotalCount bản ghi · trang bắt đầu @Model.RecordStart</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Mã mạng</th>
+                <th>Tên mạng</th>
+                <th>Nhóm mạng</th>
+                <th>Core</th>
+                <th>Ping</th>
+                <th>XSys</th>
+                <th>WS URL</th>
+                <th>DB URL</th>
+                <th>MST</th>
+                <th class="text-center">Trạng thái</th>
+                <th>Cập nhật cuối</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.NetworkID</td>
+                <td>@r.NetworkName</td>
+                <td class="small" style="font-family:monospace">@(string.IsNullOrEmpty(r.GroupNetworkID) ? "—" : r.GroupNetworkID)</td>
+                <td class="small text-muted">@(string.IsNullOrEmpty(r.CoreAddr) ? "—" : r.CoreAddr)</td>
+                <td class="small text-muted">@(string.IsNullOrEmpty(r.PingAddr) ? "—" : r.PingAddr)</td>
+                <td class="small text-muted">@(string.IsNullOrEmpty(r.XSysAddr) ? "—" : r.XSysAddr)</td>
+                <td class="small text-muted">@(string.IsNullOrEmpty(r.WSUrlAddr) ? "—" : r.WSUrlAddr)</td>
+                <td class="small text-muted">@(string.IsNullOrEmpty(r.DBUrlAddr) ? "—" : r.DBUrlAddr)</td>
+                <td class="small" style="font-family:monospace">@(string.IsNullOrEmpty(r.MST) ? "—" : r.MST)</td>
+                <td class="text-center">
+                    @if (r.FlagActive) { <span class="badge" style="background:#059669">Đang hoạt động</span> }
+                    else { <span class="badge bg-secondary">Ngừng hoạt động</span> }
+                </td>
+                <td class="small">@r.LogLUDTimeUTC.ToString("yyyy-MM-dd HH:mm")<div class="text-muted small">@r.LogLUBy</div></td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="12" class="text-center text-muted py-4">Không có mạng/đại lý nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh mục mạng/đại lý (MstSv_Mst_Network), có phân trang + lọc theo mã mạng / tên / nhóm mạng / MST / trạng thái.
+    </p>
+</div></div>

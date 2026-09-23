@@ -587,3 +587,26 @@ public class MstSvInosOrg : IOrgOwned
     public string LogLUBy { get; set; } = "";         // người cập nhật cuối
     public long? OrderId { get; set; }                // mã đơn hàng (OrderId)
 }
+
+/// <summary>
+/// Mạng/đại lý (MstSv_Mst_Network) — danh mục mạng lưới kết nối (mạng đại lý) gắn với MST,
+/// nhóm mạng (GroupNetworkID) và các địa chỉ kết nối (Core/Ping/XSys/WS/DB).
+/// Dùng cho danh sách mạng/đại lý (MstSv_Mst_Network_Get).
+/// </summary>
+public class MstSvMstNetwork : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string NetworkID { get; set; } = "";       // mã mạng/đại lý
+    public string NetworkName { get; set; } = "";     // tên mạng/đại lý
+    public string GroupNetworkID { get; set; } = "";  // nhóm mạng (GroupNetworkID)
+    public string CoreAddr { get; set; } = "";        // địa chỉ Core
+    public string PingAddr { get; set; } = "";        // địa chỉ Ping
+    public string XSysAddr { get; set; } = "";        // địa chỉ XSys
+    public string WSUrlAddr { get; set; } = "";       // địa chỉ Web Service
+    public string DBUrlAddr { get; set; } = "";       // địa chỉ DB
+    public string MST { get; set; } = "";             // MST người nộp thuế
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}

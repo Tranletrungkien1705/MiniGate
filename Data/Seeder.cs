@@ -335,6 +335,17 @@ public static class Seeder
                 new MstSvInosOrg { MST = "0109999999", InosId = 504, ParentId = null, Name = "Hộ kinh doanh Demo C (ngừng)", BizType = "BT03", BizField = "BF01", OrgSize = "BS01", ContactName = "Phạm Thị D", Email = "c@demo.vn", PhoneNo = "0909999999", Description = "Đã ngừng hoạt động", Enable = false, CurrentUserRole = "MEMBER", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục mạng/đại lý (MstSv_Mst_Network) cho danh sách mạng/đại lý (MstSv_Mst_Network_Get).
+        if (!await db.MstSvMstNetworks.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstSvMstNetworks.AddRange(
+                new MstSvMstNetwork { NetworkID = "NET-DEMO", NetworkName = "Mạng Demo (trung tâm)", GroupNetworkID = "GRP-NET", CoreAddr = "10.0.0.1", PingAddr = "10.0.0.2", XSysAddr = "10.0.0.3", WSUrlAddr = "https://ws.demo.vn", DBUrlAddr = "10.0.0.4", MST = "0101234567", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstSvMstNetwork { NetworkID = "NET-HN", NetworkName = "Mạng Hà Nội", GroupNetworkID = "GRP-NET", CoreAddr = "10.1.0.1", PingAddr = "10.1.0.2", XSysAddr = "10.1.0.3", WSUrlAddr = "https://ws.hn.demo.vn", DBUrlAddr = "10.1.0.4", MST = "0101234567", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstSvMstNetwork { NetworkID = "NET-HCM", NetworkName = "Mạng Hồ Chí Minh", GroupNetworkID = "GRP-NET-SOUTH", CoreAddr = "10.2.0.1", PingAddr = "10.2.0.2", XSysAddr = "10.2.0.3", WSUrlAddr = "https://ws.hcm.demo.vn", DBUrlAddr = "10.2.0.4", MST = "0107654321", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" },
+                new MstSvMstNetwork { NetworkID = "NET-OLD", NetworkName = "Mạng cũ (ngừng)", GroupNetworkID = "GRP-NET", CoreAddr = "10.9.0.1", PingAddr = "10.9.0.2", XSysAddr = "10.9.0.3", WSUrlAddr = "https://ws.old.demo.vn", DBUrlAddr = "10.9.0.4", MST = "0109999999", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)
