@@ -17,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(o =>
 });
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddScoped<IGateAdminService, GateAdminService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<RateLimiter>();
 builder.Services.AddSingleton<GatewayProxy>();

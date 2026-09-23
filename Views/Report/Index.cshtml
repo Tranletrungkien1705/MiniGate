@@ -1,0 +1,57 @@
+@model InvoiceSummaryResult
+@{ ViewData["Title"] = "Tình hình sử dụng hóa đơn"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-file-earmark-bar-graph me-1"></i>Báo cáo tình hình sử dụng hóa đơn (BC26/AC)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Từ ngày</label><input type="date" name="from" value="@ViewBag.From" class="form-control form-control-sm" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Đến ngày</label><input type="date" name="to" value="@ViewBag.To" class="form-control form-control-sm" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Loại HĐ</label><input name="invoiceType" value="@ViewBag.InvoiceType" class="form-control form-control-sm" placeholder="VD: 01GTKT" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Ký hiệu</label><input name="sign" value="@ViewBag.Sign" class="form-control form-control-sm" placeholder="VD: AA/19E" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Mẫu số</label><input name="formNo" value="@ViewBag.FormNo" class="form-control form-control-sm" placeholder="VD: 1/001" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">MST</label><input name="mst" value="@ViewBag.MST" class="form-control form-control-sm" placeholder="MST NNT" /></div>
+        <div class="col-12"><button class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Tổng hợp</button></div>
+    </form>
+</div></div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tổng phát hành</div><div class="stat-num">@Model.TotalIssued.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Đã sử dụng</div><div class="stat-num" style="color:#059669">@Model.TotalUsed.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Đã xóa</div><div class="stat-num" style="color:#dc2626">@Model.TotalDeleted.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Còn lại</div><div class="stat-num">@Model.TotalRemaining.ToString("N0")</div></div></div></div>
+</div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Kỳ @Model.Month · @Model.From.ToString("dd/MM/yyyy") – @Model.To.ToString("dd/MM/yyyy")</h6>
+        <span class="text-muted small">@Model.Rows.Count mẫu hóa đơn</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead><tr>
+            <th>Loại HĐ</th><th>Mẫu số</th><th>Ký hiệu</th>
+            <th class="text-end">Từ số</th><th class="text-end">Đến số</th><th class="text-end">Tổng</th>
+            <th class="text-end">Đã dùng</th><th class="text-end">Đã xóa</th><th class="text-end">Còn lại</th>
+            <th>MST</th><th>Tên mẫu</th>
+        </tr></thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td><span class="badge bg-light text-dark">@r.InvoiceType</span></td>
+                <td class="small">@r.FormNo</td>
+                <td class="small" style="font-family:monospace">@r.Sign</td>
+                <td class="text-end small">@r.StartInvoiceNo.ToString("N0")</td>
+                <td class="text-end small">@r.EndInvoiceNo.ToString("N0")</td>
+                <td class="text-end fw-semibold">@r.TotalIssued.ToString("N0")</td>
+                <td class="text-end" style="color:#059669">@r.UsedCount.ToString("N0")</td>
+                <td class="text-end" style="color:#dc2626">@r.DeletedCount.ToString("N0")</td>
+                <td class="text-end">@r.Remaining.ToString("N0")</td>
+                <td class="small">@r.MST</td>
+                <td class="small text-muted">@r.TInvoiceName</td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="11" class="text-center text-muted py-4">Không có mẫu hóa đơn nào phát hành trong kỳ.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+</div></div>

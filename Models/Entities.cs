@@ -49,3 +49,31 @@ public class RequestLog : IOrgOwned
     public long LatencyMs { get; set; }
     public DateTime At { get; set; } = DateTime.Now;
 }
+
+/// <summary>Mẫu hóa đơn (TempInvoice) — dải số phát hành cho một ký hiệu/mẫu số.</summary>
+public class InvoiceTemplate : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string TInvoiceCode { get; set; } = "";   // mã mẫu
+    public string TInvoiceName { get; set; } = "";   // tên mẫu
+    public string InvoiceType { get; set; } = "";    // loại hóa đơn
+    public string FormNo { get; set; } = "";         // mẫu số
+    public string Sign { get; set; } = "";           // ký hiệu
+    public string MST { get; set; } = "";            // MST người nộp thuế
+    public long StartInvoiceNo { get; set; }          // từ số
+    public long EndInvoiceNo { get; set; }            // đến số
+    public DateTime EffDateStart { get; set; }        // ngày hiệu lực
+    public bool FlagActive { get; set; } = true;
+}
+
+/// <summary>Hóa đơn phát hành (Invoice) — dùng để tổng hợp tình hình sử dụng.</summary>
+public class Invoice : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string TInvoiceCode { get; set; } = "";    // trỏ tới mẫu
+    public long? InvoiceNo { get; set; }              // số hóa đơn
+    public DateTime InvoiceDate { get; set; }         // ngày lập
+    public string InvoiceStatus { get; set; } = "";   // ISSUED / DELETED / CANCELED
+}

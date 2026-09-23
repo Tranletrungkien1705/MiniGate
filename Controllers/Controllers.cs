@@ -82,6 +82,19 @@ public class PlaygroundController(IGateAdminService svc, IHttpClientFactory http
     }
 }
 
+public class ReportController(IReportService svc) : Controller
+{
+    public async Task<IActionResult> Index(DateTime? from, DateTime? to, string? invoiceType, string? sign, string? formNo, string? mst)
+    {
+        var f = from ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        var t = to ?? DateTime.Now;
+        ViewBag.From = f.ToString("yyyy-MM-dd");
+        ViewBag.To = t.ToString("yyyy-MM-dd");
+        ViewBag.InvoiceType = invoiceType; ViewBag.Sign = sign; ViewBag.FormNo = formNo; ViewBag.MST = mst;
+        return View(await svc.InvoiceSummaryAsync(f, t, invoiceType, sign, formNo, mst));
+    }
+}
+
 public class OrgController(AppDbContext db) : Controller
 {
     public async Task<IActionResult> Index()

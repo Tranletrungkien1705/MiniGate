@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<GwRoute> Routes => Set<GwRoute>();
     public DbSet<ApiClient> Clients => Set<ApiClient>();
     public DbSet<RequestLog> Logs => Set<RequestLog>();
+    public DbSet<InvoiceTemplate> InvoiceTemplates => Set<InvoiceTemplate>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -20,6 +22,8 @@ public class AppDbContext : DbContext
         b.Entity<GwRoute>(e => { e.HasIndex(x => new { x.OrgId, x.Prefix }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<ApiClient>(e => { e.HasIndex(x => x.ApiKey).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<RequestLog>(e => { e.HasIndex(x => x.At); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<InvoiceTemplate>(e => { e.HasIndex(x => new { x.OrgId, x.TInvoiceCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<Invoice>(e => { e.HasIndex(x => new { x.OrgId, x.TInvoiceCode, x.InvoiceNo }); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

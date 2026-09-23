@@ -33,6 +33,25 @@ public static class Seeder
             db.Clients.Add(new ApiClient { Name = "Mobile App Demo", ApiKey = "gk_demo_mobile", RateLimitPerMin = 60 });
             await db.SaveChangesAsync();
         }
+        // Dữ liệu mẫu cho báo cáo tình hình sử dụng hóa đơn (BC26/AC).
+        if (!await db.InvoiceTemplates.AnyAsync())
+        {
+            var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            var t1 = new InvoiceTemplate { TInvoiceCode = "TINVOICODE.001", TInvoiceName = "Hóa đơn GTGT 1/001", InvoiceType = "01GTKT", FormNo = "1/001", Sign = "AA/19E", MST = "0101234567", StartInvoiceNo = 1, EndInvoiceNo = 500, EffDateStart = monthStart };
+            var t2 = new InvoiceTemplate { TInvoiceCode = "TINVOICODE.002", TInvoiceName = "Hóa đơn GTGT 2/001", InvoiceType = "01GTKT", FormNo = "2/001", Sign = "AA/19E", MST = "0101234567", StartInvoiceNo = 1, EndInvoiceNo = 200, EffDateStart = monthStart };
+            db.InvoiceTemplates.AddRange(t1, t2);
+            await db.SaveChangesAsync();
+
+            var invs = new List<Invoice>();
+            for (long n = 1; n <= 120; n++)
+                invs.Add(new Invoice { TInvoiceCode = t1.TInvoiceCode, InvoiceNo = n, InvoiceDate = monthStart.AddDays(2), InvoiceStatus = "ISSUED" });
+            for (long n = 121; n <= 125; n++)
+                invs.Add(new Invoice { TInvoiceCode = t1.TInvoiceCode, InvoiceNo = n, InvoiceDate = monthStart.AddDays(3), InvoiceStatus = "DELETED" });
+            for (long n = 1; n <= 40; n++)
+                invs.Add(new Invoice { TInvoiceCode = t2.TInvoiceCode, InvoiceNo = n, InvoiceDate = monthStart.AddDays(4), InvoiceStatus = "ISSUED" });
+            db.Invoices.AddRange(invs);
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)
