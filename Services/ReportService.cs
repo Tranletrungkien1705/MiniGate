@@ -271,6 +271,19 @@ public record InosOrgListResult(
     List<InosOrgRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách giải pháp hệ thống (Sys_Solution) —
+/// mã/tên giải pháp, mạng-đại lý, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record SysSolutionRow(
+    int Idx, string SolutionCode, string NetworkID, string SolutionName, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách giải pháp hệ thống: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record SysSolutionListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<SysSolutionRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách người nộp thuế (Mst_NNT) — kèm thông tin cơ quan thuế (Mst_GovTaxID),
 /// tỉnh (Mst_Province), huyện (Mst_District) và đơn hàng license (MstSv_Inos_Org).
 /// </summary>
@@ -362,6 +375,9 @@ public interface IReportService
     Task<InosOrgListResult> InosOrgListAsync(int recordStart = 0, int recordCount = 50,
         string? mst = null, string? name = null, string? bizType = null, string? bizField = null,
         string? orgSize = null, bool? flagActive = null);
+
+    Task<SysSolutionListResult> SysSolutionListAsync(int recordStart = 0, int recordCount = 50,
+        string? solutionCode = null, string? networkId = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1331,5 +1347,37 @@ public class ReportService(AppDbContext db) : IReportService
             t.LogLUDTimeUTC, t.LogLUBy)).ToList();
 
         return new InvoiceTypeListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách giải pháp hệ thống (RptSv_Sys_Solution_Get) — endpoint tổng hợp: trả về danh mục
+    /// giải pháp (mã/tên/mạng-đại lý/trạng thái), có phân trang + lọc theo mã giải pháp /
+    /// mạng-đại lý / trạng thái.
+    /// Port từ RptSv_Sys_Solution_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Sys_Solution_Filter_Draft/#tbl_Sys_Solution_Filter và khối select Sys_Solution thành LINQ.
+    /// </summary>
+    public async Task<SysSolutionListResult> SysSolutionListAsync(int recordStart = 0, int recordCount = 50,
+        string? solutionCode = null, string? networkId = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc giải pháp theo mã / mạng-đại lý / trạng thái (tương ứng #tbl_Sys_Solution_Filter_Draft).
+        var items = await db.SysSolutions
+            .Where(s => string.IsNullOrEmpty(solutionCode) || s.SolutionCode == solutionCode)
+            .Where(s => string.IsNullOrEmpty(networkId) || s.NetworkID == networkId)
+            .Where(s => flagActive == null || s.FlagActive == flagActive)
+            .OrderBy(s => s.SolutionCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Sys_Solution_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((s, i) => new SysSolutionRow(
+            recordStart + i + 1, s.SolutionCode, s.NetworkID, s.SolutionName, s.FlagActive,
+            s.LogLUDTimeUTC, s.LogLUBy)).ToList();
+
+        return new SysSolutionListResult(recordStart, recordCount, total, rows);
     }
 }

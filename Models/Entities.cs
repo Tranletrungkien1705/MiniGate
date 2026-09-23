@@ -433,6 +433,7 @@ public class SysSolution : IOrgOwned
     public int Id { get; set; }
     public Guid OrgId { get; set; }
     public string SolutionCode { get; set; } = "";    // mã giải pháp
+    public string NetworkID { get; set; } = "";       // mạng/đại lý
     public string SolutionName { get; set; } = "";    // tên giải pháp
     public bool FlagActive { get; set; } = true;
     public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối

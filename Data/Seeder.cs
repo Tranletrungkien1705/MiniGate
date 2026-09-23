@@ -238,9 +238,9 @@ public static class Seeder
         {
             var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
             db.SysSolutions.AddRange(
-                new SysSolution { SolutionCode = "SOL_HDDT", SolutionName = "Hóa đơn điện tử", LogLUDTimeUTC = upd, LogLUBy = "admin" },
-                new SysSolution { SolutionCode = "SOL_QLDL", SolutionName = "Quản lý đại lý", LogLUDTimeUTC = upd, LogLUBy = "admin" },
-                new SysSolution { SolutionCode = "SOL_KT", SolutionName = "Kế toán tổng hợp", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+                new SysSolution { SolutionCode = "SOL_HDDT", NetworkID = "NET-DEMO", SolutionName = "Hóa đơn điện tử", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysSolution { SolutionCode = "SOL_QLDL", NetworkID = "NET-DEMO", SolutionName = "Quản lý đại lý", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysSolution { SolutionCode = "SOL_KT", NetworkID = "NET-DEMO", SolutionName = "Kế toán tổng hợp", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
         if (!await db.SysModules.AnyAsync())
