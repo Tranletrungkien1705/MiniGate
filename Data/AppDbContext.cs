@@ -26,6 +26,7 @@ public class AppDbContext : DbContext
     public DbSet<MapDealerDiscount> MapDealerDiscounts => Set<MapDealerDiscount>();
     public DbSet<SysObject> SysObjects => Set<SysObject>();
     public DbSet<SysAccess> SysAccesses => Set<SysAccess>();
+    public DbSet<SysObjectInModule> SysObjectInModules => Set<SysObjectInModule>();
     public DbSet<MstVatRate> MstVatRates => Set<MstVatRate>();
 
     protected override void OnModelCreating(ModelBuilder b)
@@ -49,6 +50,7 @@ public class AppDbContext : DbContext
         b.Entity<MapDealerDiscount>(e => { e.HasIndex(x => new { x.OrgId, x.DLCode, x.DiscountCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<SysObject>(e => { e.HasIndex(x => new { x.OrgId, x.ObjectCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<SysAccess>(e => { e.HasIndex(x => new { x.OrgId, x.GroupCode, x.ObjectCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<SysObjectInModule>(e => { e.HasIndex(x => new { x.OrgId, x.ObjectCode, x.ModuleCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstVatRate>(e => { e.HasIndex(x => new { x.OrgId, x.VATRateCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 

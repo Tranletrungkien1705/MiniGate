@@ -175,6 +175,17 @@ public static class Seeder
                 new MstVatRate { VATRateCode = "VAT20", NetworkID = "NET-DEMO", VATRate = 20m, VATDesc = "Thuế suất 20%", Remark = "Thuế suất đặc biệt", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Đối tượng trong mô-đun (Sys_ObjectInModules) cho danh sách đối tượng trong mô-đun.
+        if (!await db.SysObjectInModules.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.SysObjectInModules.AddRange(
+                new SysObjectInModule { ObjectCode = "OBJ_INVOICE", ModuleCode = "MOD_INVOICE", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysObjectInModule { ObjectCode = "OBJ_REPORT", ModuleCode = "MOD_REPORT", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysObjectInModule { ObjectCode = "OBJ_USER", ModuleCode = "MOD_SYS", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysObjectInModule { ObjectCode = "OBJ_DEALER", ModuleCode = "MOD_SYS", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

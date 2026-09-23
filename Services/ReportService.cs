@@ -194,6 +194,19 @@ public record VatRateListResult(
     int RecordStart, int RecordCount, long TotalCount,
     List<VatRateRow> Rows);
 
+/// <summary>
+/// Một dòng của danh sách đối tượng trong mô-đun (Sys_ObjectInModules) —
+/// liên kết đối tượng/chức năng (ObjectCode) ↔ mô-đun (ModuleCode) kèm thông tin cập nhật cuối.
+/// </summary>
+public record SysObjectInModuleRow(
+    int Idx, string ObjectCode, string ModuleCode,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách đối tượng trong mô-đun: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record SysObjectInModuleListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<SysObjectInModuleRow> Rows);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
@@ -231,6 +244,9 @@ public interface IReportService
 
     Task<VatRateListResult> VatRateListAsync(int recordStart = 0, int recordCount = 50,
         string? vatRateCode = null, string? networkId = null, bool? flagActive = null);
+
+    Task<SysObjectInModuleListResult> SysObjectInModuleListAsync(int recordStart = 0, int recordCount = 50,
+        string? objectCode = null, string? moduleCode = null);
 }
 
 /// <summary>
@@ -895,5 +911,37 @@ public class ReportService(AppDbContext db) : IReportService
             v.LogLUDTimeUTC, v.LogLUBy)).ToList();
 
         return new VatRateListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách đối tượng trong mô-đun (RptSv_Sys_ObjectInModules_Get) — endpoint tổng hợp:
+    /// trả về danh sách liên kết đối tượng/chức năng (ObjectCode) ↔ mô-đun (ModuleCode)
+    /// kèm thông tin cập nhật cuối, có phân trang + lọc theo mã đối tượng / mã mô-đun.
+    /// Port từ RptSv_Sys_ObjectInModules_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Sys_ObjectInModules_Filter_Draft/#tbl_Sys_ObjectInModules_Filter và khối select
+    /// Sys_ObjectInModules thành truy vấn LINQ.
+    /// </summary>
+    public async Task<SysObjectInModuleListResult> SysObjectInModuleListAsync(int recordStart = 0, int recordCount = 50,
+        string? objectCode = null, string? moduleCode = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc theo mã đối tượng / mã mô-đun (tương ứng #tbl_Sys_ObjectInModules_Filter_Draft).
+        var items = await db.SysObjectInModules
+            .Where(m => string.IsNullOrEmpty(objectCode) || m.ObjectCode == objectCode)
+            .Where(m => string.IsNullOrEmpty(moduleCode) || m.ModuleCode == moduleCode)
+            .OrderBy(m => m.ObjectCode).ThenBy(m => m.ModuleCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Sys_ObjectInModules_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((m, i) => new SysObjectInModuleRow(
+            recordStart + i + 1, m.ObjectCode, m.ModuleCode,
+            m.LogLUDTimeUTC, m.LogLUBy)).ToList();
+
+        return new SysObjectInModuleListResult(recordStart, recordCount, total, rows);
     }
 }

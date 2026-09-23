@@ -280,6 +280,20 @@ public class SysAccess : IOrgOwned
 }
 
 /// <summary>
+/// Đối tượng trong mô-đun (Sys_ObjectInModules) — liên kết đối tượng/chức năng (ObjectCode)
+/// với mô-đun (ModuleCode). Dùng cho danh sách đối tượng trong mô-đun (RptSv_Sys_ObjectInModules_Get).
+/// </summary>
+public class SysObjectInModule : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string ObjectCode { get; set; } = "";      // mã đối tượng/chức năng
+    public string ModuleCode { get; set; } = "";      // mã mô-đun
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}
+
+/// <summary>
 /// Thuế suất GTGT (Mst_VATRate) — danh mục thuế suất dùng khi lập hóa đơn.
 /// Dùng cho danh sách thuế suất (RptSv_Mst_VATRate_Get).
 /// </summary>

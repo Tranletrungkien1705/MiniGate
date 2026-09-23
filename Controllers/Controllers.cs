@@ -202,6 +202,15 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.VATRateCode = vatRateCode; ViewBag.NetworkID = networkId; ViewBag.FlagActive = flagActive;
         return View(await svc.VatRateListAsync(start, count, vatRateCode, networkId, active));
     }
+
+    public async Task<IActionResult> ObjectInModules(int? recordStart, int? recordCount, string? objectCode, string? moduleCode)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.ObjectCode = objectCode; ViewBag.ModuleCode = moduleCode;
+        return View(await svc.SysObjectInModuleListAsync(start, count, objectCode, moduleCode));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

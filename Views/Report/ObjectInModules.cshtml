@@ -1,0 +1,47 @@
+@model SysObjectInModuleListResult
+@{ ViewData["Title"] = "Đối tượng trong mô-đun"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-diagram-2 me-1"></i>Danh sách đối tượng trong mô-đun (RptSv_Sys_ObjectInModules)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-4"><label class="form-label small mb-1">Mã đối tượng (ObjectCode)</label><input name="objectCode" value="@ViewBag.ObjectCode" class="form-control form-control-sm" placeholder="VD: OBJ_INVOICE" /></div>
+        <div class="col-6 col-md-4"><label class="form-label small mb-1">Mã mô-đun (ModuleCode)</label><input name="moduleCode" value="@ViewBag.ModuleCode" class="form-control form-control-sm" placeholder="VD: MOD_INVOICE" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Số/trang</label><input type="number" name="recordCount" value="@ViewBag.RecordCount" class="form-control form-control-sm" min="1" /></div>
+        <div class="col-6 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i></button></div>
+    </form>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Danh sách đối tượng trong mô-đun</h6>
+        <span class="text-muted small">@Model.TotalCount bản ghi · trang bắt đầu @Model.RecordStart</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Mã đối tượng</th>
+                <th>Mã mô-đun</th>
+                <th>Cập nhật cuối</th>
+                <th>Người cập nhật</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.ObjectCode</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.ModuleCode</td>
+                <td class="small">@r.LogLUDTimeUTC.ToString("yyyy-MM-dd HH:mm")</td>
+                <td class="small">@(string.IsNullOrEmpty(r.LogLUBy) ? "—" : r.LogLUBy)</td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="5" class="text-center text-muted py-4">Không có đối tượng nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh sách liên kết đối tượng/chức năng (ObjectCode) ↔ mô-đun (ModuleCode) kèm thông tin cập nhật cuối, có phân trang + lọc theo mã đối tượng / mã mô-đun.
+    </p>
+</div></div>
