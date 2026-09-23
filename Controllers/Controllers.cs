@@ -253,6 +253,16 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.ModuleCode = moduleCode; ViewBag.SolutionCode = solutionCode; ViewBag.NetworkID = networkId; ViewBag.FlagActive = flagActive;
         return View(await svc.SysModuleListAsync(start, count, moduleCode, solutionCode, networkId, active));
     }
+
+    public async Task<IActionResult> InvoiceTypes(int? recordStart, int? recordCount, string? invoiceType, string? networkId, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.InvoiceType = invoiceType; ViewBag.NetworkID = networkId; ViewBag.FlagActive = flagActive;
+        return View(await svc.InvoiceTypeListAsync(start, count, invoiceType, networkId, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

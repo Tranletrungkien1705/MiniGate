@@ -253,6 +253,17 @@ public static class Seeder
                 new SysModule { ModuleCode = "MOD_ACCOUNT", NetworkID = "NET-DEMO", SolutionCode = "SOL_KT", ModuleName = "Kế toán tổng hợp", Description = "Hạch toán & đối soát", QtyInvoice = 0, ValCapacity = 5m, FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục loại hóa đơn (Mst_InvoiceType) cho danh sách loại hóa đơn (RptSv_Mst_InvoiceType_Get).
+        if (!await db.MstInvoiceTypes.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstInvoiceTypes.AddRange(
+                new MstInvoiceType { InvoiceType = "01GTKT", NetworkID = "NET-DEMO", InvoiceTypeName = "Hóa đơn giá trị gia tăng", Remark = "Hóa đơn GTGT thông thường", TTType = "GTGT", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstInvoiceType { InvoiceType = "02GTTT", NetworkID = "NET-DEMO", InvoiceTypeName = "Hóa đơn bán hàng", Remark = "Hóa đơn bán hàng thông thường", TTType = "BANHANG", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstInvoiceType { InvoiceType = "04HDDT", NetworkID = "NET-DEMO", InvoiceTypeName = "Hóa đơn điện tử", Remark = "Hóa đơn điện tử có mã của CQT", TTType = "HDDT", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstInvoiceType { InvoiceType = "07GTKT", NetworkID = "NET-DEMO", InvoiceTypeName = "Hóa đơn GTGT (ngừng)", Remark = "Loại cũ không còn dùng", TTType = "GTGT", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

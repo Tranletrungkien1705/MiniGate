@@ -407,6 +407,24 @@ public class MstPaymentMethod : IOrgOwned
 }
 
 /// <summary>
+/// Loại hóa đơn (Mst_InvoiceType) — danh mục loại hóa đơn dùng khi lập/phát hành hóa đơn.
+/// Dùng cho danh sách loại hóa đơn (RptSv_Mst_InvoiceType_Get).
+/// </summary>
+public class MstInvoiceType : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string InvoiceType { get; set; } = "";       // mã loại hóa đơn
+    public string NetworkID { get; set; } = "";         // mạng/đại lý
+    public string InvoiceTypeName { get; set; } = "";   // tên loại hóa đơn
+    public string Remark { get; set; } = "";            // ghi chú
+    public string TTType { get; set; } = "";            // loại TT (TTType)
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }           // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";           // người cập nhật cuối
+}
+
+/// <summary>
 /// Giải pháp hệ thống (Sys_Solution) — nhóm các mô-đun theo một giải pháp nghiệp vụ.
 /// Dùng cho danh sách mô-đun hệ thống (RptSv_Sys_Modules_Get).
 /// </summary>

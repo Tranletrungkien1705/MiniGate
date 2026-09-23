@@ -226,6 +226,20 @@ public record PaymentMethodListResult(
     List<PaymentMethodRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách loại hóa đơn (Mst_InvoiceType) —
+/// mã/tên loại hóa đơn, mạng-đại lý, ghi chú, loại TT, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record InvoiceTypeRow(
+    int Idx, string InvoiceType, string NetworkID, string InvoiceTypeName,
+    string Remark, string TTType, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách loại hóa đơn: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record InvoiceTypeListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<InvoiceTypeRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách mô-đun hệ thống (Sys_Modules) — kèm thông tin giải pháp (Sys_Solution).
 /// </summary>
 public record SysModuleRow(
@@ -321,6 +335,9 @@ public interface IReportService
 
     Task<PaymentMethodListResult> PaymentMethodListAsync(int recordStart = 0, int recordCount = 50,
         string? paymentMethodCode = null, string? networkId = null, bool? flagActive = null);
+
+    Task<InvoiceTypeListResult> InvoiceTypeListAsync(int recordStart = 0, int recordCount = 50,
+        string? invoiceType = null, string? networkId = null, bool? flagActive = null);
 
     Task<SysModuleListResult> SysModuleListAsync(int recordStart = 0, int recordCount = 50,
         string? moduleCode = null, string? solutionCode = null, string? networkId = null, bool? flagActive = null);
@@ -1212,5 +1229,39 @@ public class ReportService(AppDbContext db) : IReportService
         }).ToList();
 
         return new SysModuleListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách loại hóa đơn (RptSv_Mst_InvoiceType_Get) — endpoint tổng hợp: trả về danh mục
+    /// loại hóa đơn (mã/tên/mạng-đại lý/ghi chú/loại TT/trạng thái), có phân trang + lọc theo
+    /// mã loại hóa đơn / mạng-đại lý / trạng thái.
+    /// Port từ RptSv_Mst_InvoiceType_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Mst_InvoiceType_Filter_Draft/#tbl_Mst_InvoiceType_Filter và khối select
+    /// Mst_InvoiceType thành truy vấn LINQ.
+    /// </summary>
+    public async Task<InvoiceTypeListResult> InvoiceTypeListAsync(int recordStart = 0, int recordCount = 50,
+        string? invoiceType = null, string? networkId = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc loại hóa đơn theo mã / mạng-đại lý / trạng thái (tương ứng #tbl_Mst_InvoiceType_Filter_Draft).
+        var items = await db.MstInvoiceTypes
+            .Where(t => string.IsNullOrEmpty(invoiceType) || t.InvoiceType == invoiceType)
+            .Where(t => string.IsNullOrEmpty(networkId) || t.NetworkID == networkId)
+            .Where(t => flagActive == null || t.FlagActive == flagActive)
+            .OrderBy(t => t.InvoiceType)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_InvoiceType_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((t, i) => new InvoiceTypeRow(
+            recordStart + i + 1, t.InvoiceType, t.NetworkID, t.InvoiceTypeName,
+            t.Remark, t.TTType, t.FlagActive,
+            t.LogLUDTimeUTC, t.LogLUBy)).ToList();
+
+        return new InvoiceTypeListResult(recordStart, recordCount, total, rows);
     }
 }
