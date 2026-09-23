@@ -139,6 +139,19 @@ public record LicOrderCommissionResult(
     List<LicOrderCommissionRow> Rows,
     long TotalOrders, decimal TotalPrice, decimal TotalDiscount, decimal TotalCommission);
 
+/// <summary>
+/// Một dòng của danh sách cấu hình chiết khấu đại lý (Map_DealerDiscount) —
+/// ánh xạ mã đại lý ↔ mã chiết khấu kèm trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record MapDealerDiscountRow(
+    int Idx, string DLCode, string DiscountCode, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách cấu hình chiết khấu đại lý: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record MapDealerDiscountListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<MapDealerDiscountRow> Rows);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
@@ -164,6 +177,9 @@ public interface IReportService
 
     Task<LicOrderCommissionResult> LicOrderCommissionAsync(DateTime from, DateTime to,
         string? dlCode = null, string? mst = null, string? commissionStatus = null);
+
+    Task<MapDealerDiscountListResult> MapDealerDiscountListAsync(int recordStart = 0, int recordCount = 50,
+        string? dlCode = null, string? discountCode = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -683,5 +699,38 @@ public class ReportService(AppDbContext db) : IReportService
 
         return new LicOrderCommissionResult(dFrom, dTo, dlCode, mst, commissionStatus, rows,
             rows.Count, rows.Sum(r => r.Price), rows.Sum(r => r.DiscountVal), rows.Sum(r => r.CommissionTotal));
+    }
+
+    /// <summary>
+    /// Danh sách cấu hình chiết khấu đại lý (RptSv_Map_DealerDiscount_Get) — endpoint tổng hợp:
+    /// trả về danh sách ánh xạ mã đại lý ↔ mã chiết khấu (có phân trang + lọc theo mã đại lý /
+    /// mã chiết khấu / trạng thái).
+    /// Port từ RptSv_Map_DealerDiscount_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Map_DealerDiscount_Filter_Draft/#tbl_Map_DealerDiscount_Filter và khối select
+    /// Map_DealerDiscount thành truy vấn LINQ.
+    /// </summary>
+    public async Task<MapDealerDiscountListResult> MapDealerDiscountListAsync(int recordStart = 0, int recordCount = 50,
+        string? dlCode = null, string? discountCode = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc theo mã đại lý / mã chiết khấu / trạng thái (tương ứng #tbl_Map_DealerDiscount_Filter_Draft).
+        var items = await db.MapDealerDiscounts
+            .Where(m => string.IsNullOrEmpty(dlCode) || m.DLCode == dlCode)
+            .Where(m => string.IsNullOrEmpty(discountCode) || m.DiscountCode == discountCode)
+            .Where(m => flagActive == null || m.FlagActive == flagActive)
+            .OrderBy(m => m.DLCode).ThenBy(m => m.DiscountCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Map_DealerDiscount_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((m, i) => new MapDealerDiscountRow(
+            recordStart + i + 1, m.DLCode, m.DiscountCode, m.FlagActive,
+            m.LogLUDTimeUTC, m.LogLUBy)).ToList();
+
+        return new MapDealerDiscountListResult(recordStart, recordCount, total, rows);
     }
 }

@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<InvoiceTempGroupField> InvoiceTempGroupFields => Set<InvoiceTempGroupField>();
     public DbSet<LicOrder> LicOrders => Set<LicOrder>();
     public DbSet<LicOrderCommission> LicOrderCommissions => Set<LicOrderCommission>();
+    public DbSet<MapDealerDiscount> MapDealerDiscounts => Set<MapDealerDiscount>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -42,6 +43,7 @@ public class AppDbContext : DbContext
         b.Entity<InvoiceTempGroupField>(e => { e.HasIndex(x => new { x.OrgId, x.InvoiceTGroupCode, x.DBFieldName }); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<LicOrder>(e => { e.HasIndex(x => new { x.OrgId, x.OrderId }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<LicOrderCommission>(e => { e.HasIndex(x => new { x.OrgId, x.OrderId }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<MapDealerDiscount>(e => { e.HasIndex(x => new { x.OrgId, x.DLCode, x.DiscountCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

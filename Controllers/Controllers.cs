@@ -163,6 +163,16 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.DLCode = dlCode; ViewBag.MST = mst; ViewBag.CommissionStatus = commissionStatus;
         return View(await svc.LicOrderCommissionAsync(f, t, dlCode, mst, commissionStatus));
     }
+
+    public async Task<IActionResult> DealerDiscounts(int? recordStart, int? recordCount, string? dlCode, string? discountCode, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.DLCode = dlCode; ViewBag.DiscountCode = discountCode; ViewBag.FlagActive = flagActive;
+        return View(await svc.MapDealerDiscountListAsync(start, count, dlCode, discountCode, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

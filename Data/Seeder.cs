@@ -129,6 +129,17 @@ public static class Seeder
                 new LicOrderCommission { OrderId = 1003, CommissionStatus = "APPROVED", Remark = "Đã duyệt chờ trả", Presenter1 = "ketoan_a", Presenter2 = "ketoan_b", Telesale = "ketoan_b", Implementer = "admin", CommissionPresenter1 = 1_000_000m, CommissionPresenter2 = 400_000m, CommissionTelesale = 600_000m, CommissionImplementer = 500_000m });
             await db.SaveChangesAsync();
         }
+        // Cấu hình chiết khấu đại lý (Map_DealerDiscount) cho danh sách chiết khấu đại lý.
+        if (!await db.MapDealerDiscounts.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MapDealerDiscounts.AddRange(
+                new MapDealerDiscount { DLCode = "DL001", DiscountCode = "DC10", FlagActive = true, LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MapDealerDiscount { DLCode = "DL001", DiscountCode = "DC15", FlagActive = true, LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MapDealerDiscount { DLCode = "DL002", DiscountCode = "DC05", FlagActive = true, LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MapDealerDiscount { DLCode = "DL003", DiscountCode = "DC20", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

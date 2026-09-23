@@ -1,0 +1,59 @@
+@model MapDealerDiscountListResult
+@{ ViewData["Title"] = "Chiết khấu đại lý"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-percent me-1"></i>Cấu hình chiết khấu đại lý (RptSv_Map_DealerDiscount)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Mã đại lý (DLCode)</label><input name="dlCode" value="@ViewBag.DLCode" class="form-control form-control-sm" placeholder="VD: DL001" /></div>
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Mã chiết khấu (DiscountCode)</label><input name="discountCode" value="@ViewBag.DiscountCode" class="form-control form-control-sm" placeholder="VD: DC10" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Trạng thái</label>
+            <select name="flagActive" class="form-select form-select-sm">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.FlagActive as string))">Tất cả</option>
+                <option value="1" selected="@(ViewBag.FlagActive == "1")">Đang áp dụng</option>
+                <option value="0" selected="@(ViewBag.FlagActive == "0")">Ngừng áp dụng</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Số bản ghi/trang</label><input type="number" name="recordCount" value="@ViewBag.RecordCount" class="form-control form-control-sm" min="1" /></div>
+        <div class="col-12 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Xem</button></div>
+    </form>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Danh sách ánh xạ đại lý ↔ chiết khấu</h6>
+        <span class="text-muted small">@Model.TotalCount bản ghi · trang bắt đầu @Model.RecordStart</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Mã đại lý</th>
+                <th>Mã chiết khấu</th>
+                <th class="text-center">Trạng thái</th>
+                <th>Cập nhật cuối</th>
+                <th>Người cập nhật</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.DLCode</td>
+                <td style="font-family:monospace">@r.DiscountCode</td>
+                <td class="text-center">
+                    @if (r.FlagActive) { <span class="badge" style="background:#059669">Đang áp dụng</span> }
+                    else { <span class="badge bg-secondary">Ngừng áp dụng</span> }
+                </td>
+                <td class="small">@r.LogLUDTimeUTC.ToString("yyyy-MM-dd HH:mm")</td>
+                <td class="small">@(string.IsNullOrEmpty(r.LogLUBy) ? "—" : r.LogLUBy)</td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="6" class="text-center text-muted py-4">Không có cấu hình nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh sách ánh xạ mã đại lý (DLCode) ↔ mã chiết khấu (DiscountCode) kèm trạng thái áp dụng và thông tin cập nhật cuối, có phân trang + lọc theo mã đại lý / mã chiết khấu / trạng thái.
+    </p>
+</div></div>

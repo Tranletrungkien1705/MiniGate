@@ -229,3 +229,18 @@ public class LicOrderCommission : IOrgOwned
     public decimal CommissionConsultants { get; set; }
     public decimal CommissionImplementer { get; set; }
 }
+
+/// <summary>
+/// Cấu hình chiết khấu đại lý (Map_DealerDiscount) — ánh xạ mã đại lý (DLCode) ↔ mã chiết khấu (DiscountCode).
+/// Dùng cho danh sách cấu hình chiết khấu đại lý (RptSv_Map_DealerDiscount_Get).
+/// </summary>
+public class MapDealerDiscount : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string DLCode { get; set; } = "";          // mã đại lý
+    public string DiscountCode { get; set; } = "";    // mã chiết khấu
+    public bool FlagActive { get; set; } = true;       // đang áp dụng
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}
