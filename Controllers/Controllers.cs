@@ -203,6 +203,16 @@ public class ReportController(IReportService svc) : Controller
         return View(await svc.VatRateListAsync(start, count, vatRateCode, networkId, active));
     }
 
+    public async Task<IActionResult> GovIdTypes(int? recordStart, int? recordCount, string? govIdType, string? networkId, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.GovIDType = govIdType; ViewBag.NetworkID = networkId; ViewBag.FlagActive = flagActive;
+        return View(await svc.GovIdTypeListAsync(start, count, govIdType, networkId, active));
+    }
+
     public async Task<IActionResult> ObjectInModules(int? recordStart, int? recordCount, string? objectCode, string? moduleCode)
     {
         var start = recordStart ?? 0;

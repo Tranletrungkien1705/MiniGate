@@ -195,6 +195,20 @@ public record VatRateListResult(
     List<VatRateRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách loại giấy tờ (Mst_GovIDType) —
+/// mã/tên loại giấy tờ, mạng-đại lý, ghi chú, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record GovIdTypeRow(
+    int Idx, string GovIDType, string NetworkID, string GovIDTypeName,
+    string Remark, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách loại giấy tờ: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record GovIdTypeListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<GovIdTypeRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách đại lý (Mst_Dealer) — kèm tên tỉnh (Mst_Province)
 /// và số khách hàng/NNT gắn với đại lý (count_MST = SLKH).
 /// </summary>
@@ -351,6 +365,9 @@ public interface IReportService
 
     Task<VatRateListResult> VatRateListAsync(int recordStart = 0, int recordCount = 50,
         string? vatRateCode = null, string? networkId = null, bool? flagActive = null);
+
+    Task<GovIdTypeListResult> GovIdTypeListAsync(int recordStart = 0, int recordCount = 50,
+        string? govIdType = null, string? networkId = null, bool? flagActive = null);
 
     Task<SysObjectInModuleListResult> SysObjectInModuleListAsync(int recordStart = 0, int recordCount = 50,
         string? objectCode = null, string? moduleCode = null);
@@ -1042,6 +1059,40 @@ public class ReportService(AppDbContext db) : IReportService
             v.LogLUDTimeUTC, v.LogLUBy)).ToList();
 
         return new VatRateListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách loại giấy tờ (RptSv_Mst_GovIDType_Get) — endpoint tổng hợp:
+    /// trả về danh mục loại giấy tờ (mã/tên loại giấy tờ/ghi chú/trạng thái), có phân trang
+    /// + lọc theo mã loại giấy tờ / mạng-đại lý / trạng thái.
+    /// Port từ RptSv_Mst_GovIDType_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Mst_GovIDType_Filter_Draft/#tbl_Mst_GovIDType_Filter và khối select
+    /// Mst_GovIDType thành truy vấn LINQ.
+    /// </summary>
+    public async Task<GovIdTypeListResult> GovIdTypeListAsync(int recordStart = 0, int recordCount = 50,
+        string? govIdType = null, string? networkId = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc loại giấy tờ theo mã / mạng-đại lý / trạng thái (tương ứng #tbl_Mst_GovIDType_Filter_Draft).
+        var items = await db.MstGovIdTypes
+            .Where(g => string.IsNullOrEmpty(govIdType) || g.GovIDType == govIdType)
+            .Where(g => string.IsNullOrEmpty(networkId) || g.NetworkID == networkId)
+            .Where(g => flagActive == null || g.FlagActive == flagActive)
+            .OrderBy(g => g.GovIDType)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_GovIDType_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((g, i) => new GovIdTypeRow(
+            recordStart + i + 1, g.GovIDType, g.NetworkID, g.GovIDTypeName,
+            g.Remark, g.FlagActive,
+            g.LogLUDTimeUTC, g.LogLUBy)).ToList();
+
+        return new GovIdTypeListResult(recordStart, recordCount, total, rows);
     }
 
     /// <summary>

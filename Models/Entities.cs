@@ -122,6 +122,24 @@ public class MstNnt : IOrgOwned
 }
 
 /// <summary>
+/// Loại giấy tờ (Mst_GovIDType) — danh mục loại giấy tờ tùy thân/tổ chức
+/// (CMND/CCCD/hộ chiếu/ĐKKD...) dùng khi đăng ký người nộp thuế.
+/// Dùng cho danh sách loại giấy tờ (RptSv_Mst_GovIDType_Get).
+/// </summary>
+public class MstGovIdType : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string GovIDType { get; set; } = "";        // mã loại giấy tờ
+    public string NetworkID { get; set; } = "";        // mạng/đại lý
+    public string GovIDTypeName { get; set; } = "";    // tên loại giấy tờ
+    public string Remark { get; set; } = "";           // ghi chú
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }         // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";          // người cập nhật cuối
+}
+
+/// <summary>
 /// Cơ quan thuế (Mst_GovTaxID) — danh mục cơ quan thuế quản lý NNT.
 /// Dùng cho danh sách người nộp thuế (RptSv_Mst_NNT_Get).
 /// </summary>

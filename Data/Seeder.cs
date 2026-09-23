@@ -76,6 +76,18 @@ public static class Seeder
                 new MstGovTaxId { GovTaxID = "CQT-DN", GovTaxName = "Cục Thuế TP Đà Nẵng" });
             await db.SaveChangesAsync();
         }
+        // Danh mục loại giấy tờ (Mst_GovIDType) cho danh sách loại giấy tờ (RptSv_Mst_GovIDType_Get).
+        if (!await db.MstGovIdTypes.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstGovIdTypes.AddRange(
+                new MstGovIdType { GovIDType = "CMND", NetworkID = "NET-DEMO", GovIDTypeName = "Chứng minh nhân dân", Remark = "CMND 9 số cấp trước 2016", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstGovIdType { GovIDType = "CCCD", NetworkID = "NET-DEMO", GovIDTypeName = "Căn cước công dân", Remark = "CCCD gắn chip 12 số", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstGovIdType { GovIDType = "HOPCHIEU", NetworkID = "NET-DEMO", GovIDTypeName = "Hộ chiếu", Remark = "Passport", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstGovIdType { GovIDType = "DKKD", NetworkID = "NET-DEMO", GovIDTypeName = "Giấy chứng nhận ĐKKD", Remark = "Giấy phép kinh doanh của tổ chức", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" },
+                new MstGovIdType { GovIDType = "GIAYTO_CU", NetworkID = "NET-DEMO", GovIDTypeName = "Giấy tờ cũ (ngừng)", Remark = "Loại không còn dùng", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
         if (!await db.MstProvinces.AnyAsync())
         {
             db.MstProvinces.AddRange(
