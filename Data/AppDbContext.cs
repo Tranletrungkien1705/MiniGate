@@ -47,6 +47,7 @@ public class AppDbContext : DbContext
     public DbSet<NotifyNotify> NotifyNotifies => Set<NotifyNotify>();
     public DbSet<NotifyNotifyDtl> NotifyNotifyDtls => Set<NotifyNotifyDtl>();
     public DbSet<MstCountry> MstCountries => Set<MstCountry>();
+    public DbSet<MstDepartment> MstDepartments => Set<MstDepartment>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -90,6 +91,7 @@ public class AppDbContext : DbContext
         b.Entity<NotifyNotify>(e => { e.HasIndex(x => new { x.OrgId, x.NotifyNo }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<NotifyNotifyDtl>(e => { e.HasIndex(x => new { x.OrgId, x.NotifyNo, x.UserCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstCountry>(e => { e.HasIndex(x => new { x.OrgId, x.CountryCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<MstDepartment>(e => { e.HasIndex(x => new { x.OrgId, x.DepartmentCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

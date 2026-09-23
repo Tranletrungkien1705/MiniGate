@@ -369,6 +369,21 @@ public record CountryListResult(
     List<CountryRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách phòng ban (Mst_Department) —
+/// mã/tên phòng ban, cấp trên, đơn vị nghiệp vụ, cấp, MST, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record DepartmentRow(
+    int Idx, string DepartmentCode, string NetworkID, string DepartmentCodeParent,
+    string DepartmentBUCode, string DepartmentBUPattern, int DepartmentLevel, string MST,
+    string DepartmentName, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách phòng ban: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record DepartmentListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<DepartmentRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách giải pháp hệ thống (Sys_Solution) —
 /// mã/tên giải pháp, mạng-đại lý, trạng thái và thông tin cập nhật cuối.
 /// </summary>
@@ -547,6 +562,10 @@ public interface IReportService
 
     Task<CountryListResult> CountryListAsync(int recordStart = 0, int recordCount = 50,
         string? countryCode = null, string? countryName = null, bool? flagActive = null);
+
+    Task<DepartmentListResult> DepartmentListAsync(int recordStart = 0, int recordCount = 50,
+        string? departmentCode = null, string? departmentName = null, string? mst = null,
+        string? departmentCodeParent = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1905,5 +1924,40 @@ public class ReportService(AppDbContext db) : IReportService
             c.LogLUDTimeUTC, c.LogLUBy)).ToList();
 
         return new CountryListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách phòng ban (Mst_Department_Get) — endpoint tổng hợp: trả về danh mục phòng ban
+    /// (có phân trang + lọc theo mã/tên phòng ban / MST / mã cấp trên / trạng thái).
+    /// Port từ Mst_Department_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Mst_Department_Filter_Draft/#tbl_Mst_Department_Filter và khối select Mst_Department thành truy vấn LINQ.
+    /// </summary>
+    public async Task<DepartmentListResult> DepartmentListAsync(int recordStart = 0, int recordCount = 50,
+        string? departmentCode = null, string? departmentName = null, string? mst = null,
+        string? departmentCodeParent = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc phòng ban theo mã / tên / MST / cấp trên / trạng thái (tương ứng #tbl_Mst_Department_Filter_Draft).
+        var items = await db.MstDepartments
+            .Where(d => string.IsNullOrEmpty(departmentCode) || d.DepartmentCode == departmentCode)
+            .Where(d => string.IsNullOrEmpty(departmentName) || d.DepartmentName.Contains(departmentName))
+            .Where(d => string.IsNullOrEmpty(mst) || d.MST == mst)
+            .Where(d => string.IsNullOrEmpty(departmentCodeParent) || d.DepartmentCodeParent == departmentCodeParent)
+            .Where(d => flagActive == null || d.FlagActive == flagActive)
+            .OrderBy(d => d.DepartmentCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_Department_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((d, i) => new DepartmentRow(
+            recordStart + i + 1, d.DepartmentCode, d.NetworkID, d.DepartmentCodeParent,
+            d.DepartmentBUCode, d.DepartmentBUPattern, d.DepartmentLevel, d.MST,
+            d.DepartmentName, d.FlagActive, d.LogLUDTimeUTC, d.LogLUBy)).ToList();
+
+        return new DepartmentListResult(recordStart, recordCount, total, rows);
     }
 }

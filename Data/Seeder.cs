@@ -395,6 +395,18 @@ public static class Seeder
                 new MstCountry { CountryCode = "XX", CountryName = "Quốc gia cũ (ngừng)", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục phòng ban (Mst_Department) cho danh sách phòng ban (Mst_Department_Get).
+        if (!await db.MstDepartments.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstDepartments.AddRange(
+                new MstDepartment { DepartmentCode = "PB000", NetworkID = "NET-DEMO", DepartmentCodeParent = "", DepartmentBUCode = "IDOCNET.PB000", DepartmentBUPattern = "IDOCNET.PB000%", DepartmentLevel = 0, MST = "0101234567", DepartmentName = "Ban giám đốc", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstDepartment { DepartmentCode = "PB001", NetworkID = "NET-DEMO", DepartmentCodeParent = "PB000", DepartmentBUCode = "IDOCNET.PB000.PB001", DepartmentBUPattern = "IDOCNET.PB000.PB001%", DepartmentLevel = 1, MST = "0101234567", DepartmentName = "Phòng Kế toán", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstDepartment { DepartmentCode = "PB002", NetworkID = "NET-DEMO", DepartmentCodeParent = "PB000", DepartmentBUCode = "IDOCNET.PB000.PB002", DepartmentBUPattern = "IDOCNET.PB000.PB002%", DepartmentLevel = 1, MST = "0101234567", DepartmentName = "Phòng Kinh doanh", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstDepartment { DepartmentCode = "PB003", NetworkID = "NET-DEMO", DepartmentCodeParent = "PB000", DepartmentBUCode = "IDOCNET.PB000.PB003", DepartmentBUPattern = "IDOCNET.PB000.PB003%", DepartmentLevel = 1, MST = "0107654321", DepartmentName = "Phòng Kỹ thuật", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" },
+                new MstDepartment { DepartmentCode = "PB004", NetworkID = "NET-DEMO", DepartmentCodeParent = "PB000", DepartmentBUCode = "IDOCNET.PB000.PB004", DepartmentBUPattern = "IDOCNET.PB000.PB004%", DepartmentLevel = 1, MST = "0109999", DepartmentName = "Phòng cũ (ngừng)", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

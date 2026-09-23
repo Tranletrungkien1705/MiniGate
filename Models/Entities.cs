@@ -692,3 +692,25 @@ public class MstCountry : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }         // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";          // người cập nhật cuối
 }
+
+/// <summary>
+/// Phòng ban (Mst_Department) — danh mục phòng ban phân cấp (cấp trên/cấp dưới) theo MST,
+/// kèm đơn vị nghiệp vụ (DepartmentBUCode/DepartmentBUPattern) và cấp phòng ban (DepartmentLevel).
+/// Dùng cho danh sách phòng ban (Mst_Department_Get).
+/// </summary>
+public class MstDepartment : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string DepartmentCode { get; set; } = "";        // mã phòng ban
+    public string NetworkID { get; set; } = "";             // mạng/đại lý
+    public string DepartmentCodeParent { get; set; } = "";  // mã phòng ban cấp trên
+    public string DepartmentBUCode { get; set; } = "";      // mã đơn vị nghiệp vụ (DepartmentBUCode)
+    public string DepartmentBUPattern { get; set; } = "";   // mẫu LIKE đơn vị nghiệp vụ (DepartmentBUPattern)
+    public int DepartmentLevel { get; set; }                 // cấp phòng ban (DepartmentLevel)
+    public string MST { get; set; } = "";                   // MST người nộp thuế
+    public string DepartmentName { get; set; } = "";        // tên phòng ban
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }              // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";               // người cập nhật cuối
+}
