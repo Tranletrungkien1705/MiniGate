@@ -120,7 +120,30 @@ public class SysUser : IOrgOwned
     public Guid OrgId { get; set; }
     public string UserCode { get; set; } = "";        // mã đăng nhập
     public string UserName { get; set; } = "";        // tên hiển thị
+    public string UserNick { get; set; } = "";        // biệt danh (UserNick)
+    public string BankCode { get; set; } = "";        // mã ngân hàng (BankCode)
     public string MST { get; set; } = "";             // MST của user (gắn tới Mst_NNT)
     public bool FlagSysAdmin { get; set; }            // quản trị hệ thống → xem tất cả
+    public bool FlagDLAdmin { get; set; }             // quản trị đại lý (FlagDLAdmin)
     public bool FlagActive { get; set; } = true;
+}
+
+/// <summary>Nhóm quyền (Sys_Group) — dùng để gom user theo nhóm chức năng.</summary>
+public class SysGroup : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string GroupCode { get; set; } = "";       // mã nhóm
+    public string GroupName { get; set; } = "";       // tên nhóm
+    public string MST { get; set; } = "";             // MST gắn với nhóm (nếu có)
+    public bool FlagActive { get; set; } = true;
+}
+
+/// <summary>Thành viên nhóm (RptSv_Sys_UserInGroup) — liên kết user ↔ nhóm.</summary>
+public class SysUserInGroup : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string UserCode { get; set; } = "";        // mã user
+    public string GroupCode { get; set; } = "";       // mã nhóm
 }

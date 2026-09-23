@@ -17,6 +17,8 @@ public class AppDbContext : DbContext
     public DbSet<InvoiceLicense> InvoiceLicenses => Set<InvoiceLicense>();
     public DbSet<MstNnt> MstNnts => Set<MstNnt>();
     public DbSet<SysUser> SysUsers => Set<SysUser>();
+    public DbSet<SysGroup> SysGroups => Set<SysGroup>();
+    public DbSet<SysUserInGroup> SysUserInGroups => Set<SysUserInGroup>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -30,6 +32,8 @@ public class AppDbContext : DbContext
         b.Entity<InvoiceLicense>(e => { e.HasIndex(x => new { x.OrgId, x.MST }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstNnt>(e => { e.HasIndex(x => new { x.OrgId, x.MST }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<SysUser>(e => { e.HasIndex(x => new { x.OrgId, x.UserCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<SysGroup>(e => { e.HasIndex(x => new { x.OrgId, x.GroupCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<SysUserInGroup>(e => { e.HasIndex(x => new { x.OrgId, x.UserCode, x.GroupCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

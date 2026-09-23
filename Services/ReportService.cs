@@ -71,6 +71,19 @@ public record InvoiceResultUsedResult(
     List<InvoiceResultUsedRow> Rows,
     long TotalK1, long TotalUsed, long TotalDel, long TotalRemain);
 
+/// <summary>
+/// Một dòng của danh sách người dùng hệ thống (RptSv_Sys_User) — kèm danh sách nhóm đã tham gia.
+/// </summary>
+public record SysUserRow(
+    int Idx, string UserCode, string UserNick, string UserName, string BankCode,
+    bool FlagSysAdmin, bool FlagDLAdmin, bool FlagActive, string MST,
+    List<string> Groups);
+
+/// <summary>Kết quả danh sách người dùng: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record SysUserListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<SysUserRow> Rows);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
@@ -84,6 +97,9 @@ public interface IReportService
     Task<InvoiceResultUsedResult> InvoiceResultUsedAsync(DateTime from, DateTime to,
         string? invoiceType = null, string? sign = null, string? formNo = null,
         string? mst = null, string? userCode = null);
+
+    Task<SysUserListResult> SysUserListAsync(int recordStart = 0, int recordCount = 50,
+        string? userCode = null, string? groupCode = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -408,5 +424,49 @@ public class ReportService(AppDbContext db) : IReportService
         return new InvoiceResultUsedResult(dFrom, dTo, user?.UserCode ?? (userCode ?? "admin"), isSysAdmin, allowedMsts,
             rows, rows.Sum(r => r.K1_TongSo), rows.Sum(r => r.K2_TotalUsed),
             rows.Sum(r => r.K2_TotalDel), rows.Sum(r => r.K3_EndPeriod_Remain));
+    }
+
+    /// <summary>
+    /// Danh sách người dùng hệ thống (RptSv_Sys_User_Get) — endpoint tổng hợp: trả về danh sách user
+    /// (có phân trang + lọc theo mã user / nhóm / trạng thái) kèm danh sách nhóm đã tham gia.
+    /// Port từ RptSv_Sys_User_Get (MobileGate) — gộp các bảng tạm #tbl_RptSv_Sys_User_Filter_Draft/#tbl_RptSv_Sys_User_Filter
+    /// và hai khối select RptSv_Sys_User / RptSv_Sys_UserInGroup thành truy vấn LINQ.
+    /// </summary>
+    public async Task<SysUserListResult> SysUserListAsync(int recordStart = 0, int recordCount = 50,
+        string? userCode = null, string? groupCode = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc user theo mã / trạng thái (tương ứng #tbl_RptSv_Sys_User_Filter_Draft).
+        var users = await db.SysUsers
+            .Where(u => string.IsNullOrEmpty(userCode) || u.UserCode == userCode)
+            .Where(u => flagActive == null || u.FlagActive == flagActive)
+            .OrderBy(u => u.UserCode)
+            .ToListAsync();
+
+        // B2: lọc theo nhóm (join RptSv_Sys_UserInGroup) nếu có.
+        var memberships = await db.SysUserInGroups.ToListAsync();
+        if (!string.IsNullOrEmpty(groupCode))
+        {
+            var inGroup = memberships.Where(m => m.GroupCode == groupCode).Select(m => m.UserCode).ToHashSet();
+            users = users.Where(u => inGroup.Contains(u.UserCode)).ToList();
+        }
+
+        // B3: phân trang (tương ứng #tbl_RptSv_Sys_User_Filter với MyIdxSeq).
+        var total = users.Count;
+        var page = users.Skip(recordStart).Take(recordCount).ToList();
+
+        // B4: gắn danh sách nhóm của từng user (tương ứng khối select RptSv_Sys_UserInGroup).
+        var groupsByUser = memberships
+            .GroupBy(m => m.UserCode)
+            .ToDictionary(g => g.Key, g => g.Select(m => m.GroupCode).OrderBy(c => c).ToList());
+
+        var rows = page.Select((u, i) => new SysUserRow(
+            recordStart + i + 1, u.UserCode, u.UserNick, u.UserName, u.BankCode,
+            u.FlagSysAdmin, u.FlagDLAdmin, u.FlagActive, u.MST,
+            groupsByUser.GetValueOrDefault(u.UserCode, new List<string>()))).ToList();
+
+        return new SysUserListResult(recordStart, recordCount, total, rows);
     }
 }

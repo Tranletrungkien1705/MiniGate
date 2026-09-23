@@ -69,8 +69,27 @@ public static class Seeder
         if (!await db.SysUsers.AnyAsync())
         {
             db.SysUsers.AddRange(
-                new SysUser { UserCode = "admin", UserName = "Quản trị hệ thống", MST = "0101234567", FlagSysAdmin = true },
-                new SysUser { UserCode = "nnt_a", UserName = "Kế toán Demo A", MST = "0101234567", FlagSysAdmin = false });
+                new SysUser { UserCode = "admin", UserName = "Quản trị hệ thống", UserNick = "admin", BankCode = "VCB", MST = "0101234567", FlagSysAdmin = true },
+                new SysUser { UserCode = "nnt_a", UserName = "Kế toán Demo A", UserNick = "ketoan_a", BankCode = "VCB", MST = "0101234567", FlagSysAdmin = false },
+                new SysUser { UserCode = "nnt_b", UserName = "Kế toán Demo B", UserNick = "ketoan_b", BankCode = "TCB", MST = "0107654321", FlagSysAdmin = false, FlagDLAdmin = true });
+            await db.SaveChangesAsync();
+        }
+        // Nhóm quyền (Sys_Group) + thành viên nhóm (RptSv_Sys_UserInGroup) cho danh sách người dùng.
+        if (!await db.SysGroups.AnyAsync())
+        {
+            db.SysGroups.AddRange(
+                new SysGroup { GroupCode = "GRP_ADMIN", GroupName = "Quản trị hệ thống" },
+                new SysGroup { GroupCode = "GRP_KT", GroupName = "Kế toán" },
+                new SysGroup { GroupCode = "GRP_DL", GroupName = "Đại lý" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.SysUserInGroups.AnyAsync())
+        {
+            db.SysUserInGroups.AddRange(
+                new SysUserInGroup { UserCode = "admin", GroupCode = "GRP_ADMIN" },
+                new SysUserInGroup { UserCode = "nnt_a", GroupCode = "GRP_KT" },
+                new SysUserInGroup { UserCode = "nnt_b", GroupCode = "GRP_KT" },
+                new SysUserInGroup { UserCode = "nnt_b", GroupCode = "GRP_DL" });
             await db.SaveChangesAsync();
         }
     }
