@@ -58,6 +58,21 @@ public static class Seeder
             db.InvoiceLicenses.Add(new InvoiceLicense { MST = "0101234567", NetworkId = "NET-DEMO", TotalQty = 1000, TotalQtyIssued = 700, TotalQtyUsed = 160, TotalQtyCancel = 5 });
             await db.SaveChangesAsync();
         }
+        // Danh mục NNT (Mst_NNT) + user (Sys_User) cho phân quyền xem theo MST (Mst_NNT_ViewAbility).
+        if (!await db.MstNnts.AnyAsync())
+        {
+            db.MstNnts.AddRange(
+                new MstNnt { MST = "0101234567", NNTFullName = "Công ty Demo A", NNTAddress = "Hà Nội", MSTBUPattern = "ALL.0101234567%" },
+                new MstNnt { MST = "0107654321", NNTFullName = "Công ty Demo B", NNTAddress = "TP.HCM", MSTBUPattern = "ALL.0107654321%" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.SysUsers.AnyAsync())
+        {
+            db.SysUsers.AddRange(
+                new SysUser { UserCode = "admin", UserName = "Quản trị hệ thống", MST = "0101234567", FlagSysAdmin = true },
+                new SysUser { UserCode = "nnt_a", UserName = "Kế toán Demo A", MST = "0101234567", FlagSysAdmin = false });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

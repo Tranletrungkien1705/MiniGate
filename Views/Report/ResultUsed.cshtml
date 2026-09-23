@@ -1,0 +1,102 @@
+@model InvoiceResultUsedResult
+@{ ViewData["Title"] = "Hóa đơn đã sử dụng (chi tiết theo loại/ký hiệu/mẫu số)"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-receipt me-1"></i>Báo cáo hóa đơn đã sử dụng chi tiết (Rpt_InvoiceInvoice_ResultUsed)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Từ ngày</label><input type="date" name="from" value="@ViewBag.From" class="form-control form-control-sm" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Đến ngày</label><input type="date" name="to" value="@ViewBag.To" class="form-control form-control-sm" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Loại HĐ</label><input name="invoiceType" value="@ViewBag.InvoiceType" class="form-control form-control-sm" placeholder="VD: 01GTKT" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Ký hiệu</label><input name="sign" value="@ViewBag.Sign" class="form-control form-control-sm" placeholder="VD: AA/19E" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Mẫu số</label><input name="formNo" value="@ViewBag.FormNo" class="form-control form-control-sm" placeholder="VD: 1/001" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">MST</label><input name="mst" value="@ViewBag.MST" class="form-control form-control-sm" placeholder="VD: 0101234567" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Người dùng (phân quyền)</label>
+            <select name="userCode" class="form-select form-select-sm">
+                <option value="admin" selected="@(ViewBag.UserCode == "admin")">admin (SysAdmin)</option>
+                <option value="nnt_a" selected="@(ViewBag.UserCode == "nnt_a")">nnt_a (chỉ MST của mình)</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search me-1"></i>Tổng hợp</button></div>
+    </form>
+</div></div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tổng số (K1)</div><div class="stat-num">@Model.TotalK1.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Đã sử dụng (K2)</div><div class="stat-num" style="color:#059669">@Model.TotalUsed.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Đã xóa/hủy (K2)</div><div class="stat-num" style="color:#dc2626">@Model.TotalDel.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tồn cuối kỳ (K3)</div><div class="stat-num" style="color:#047857">@Model.TotalRemain.ToString("N0")</div></div></div></div>
+</div>
+
+<div class="card mb-3"><div class="card-body d-flex flex-wrap align-items-center gap-2">
+    <span class="badge bg-light text-dark"><i class="bi bi-person-badge me-1"></i>@Model.UserCode</span>
+    @if (Model.IsSysAdmin)
+    {
+        <span class="badge" style="background:#059669">SysAdmin · xem toàn bộ MST</span>
+    }
+    else
+    {
+        <span class="badge" style="background:#d97706">Phân quyền theo MST (Mst_NNT_ViewAbility)</span>
+    }
+    <span class="text-muted small">MST được xem (@Model.AllowedMsts.Count): @string.Join(", ", Model.AllowedMsts)</span>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Kỳ @Model.From.ToString("dd/MM/yyyy") – @Model.To.ToString("dd/MM/yyyy")</h6>
+        <span class="text-muted small">@Model.Rows.Count mẫu hóa đơn</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th rowspan="2" class="align-middle">Loại HĐ</th>
+                <th rowspan="2" class="align-middle">Mẫu số</th>
+                <th rowspan="2" class="align-middle">Ký hiệu</th>
+                <th colspan="5" class="text-center border-start">K1 · Tồn đầu kỳ &amp; phát hành trong kỳ</th>
+                <th colspan="4" class="text-center border-start">K2 · Sử dụng / xóa bỏ trong kỳ</th>
+                <th colspan="3" class="text-center border-start">K3 · Tồn cuối kỳ</th>
+            </tr>
+            <tr>
+                <th class="text-end border-start">Tổng số</th>
+                <th class="text-end">Tồn đầu · Từ</th>
+                <th class="text-end">Tồn đầu · Đến</th>
+                <th class="text-end">PH · Từ</th>
+                <th class="text-end">PH · Đến</th>
+                <th class="text-end border-start">Từ số</th>
+                <th class="text-end">Đến số</th>
+                <th class="text-end">Đã dùng</th>
+                <th class="text-end">Đã xóa</th>
+                <th class="text-end border-start">Từ số</th>
+                <th class="text-end">Đến số</th>
+                <th class="text-end">Còn lại</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td><span class="badge bg-light text-dark" title="@r.InvoiceTypeName">@r.InvoiceType</span></td>
+                <td class="small">@r.FormNo</td>
+                <td class="small" style="font-family:monospace">@r.Sign</td>
+                <td class="text-end fw-semibold border-start">@r.K1_TongSo.ToString("N0")</td>
+                <td class="text-end small" style="font-family:monospace">@(string.IsNullOrEmpty(r.K1_BeginPeriod_Start) ? "—" : r.K1_BeginPeriod_Start)</td>
+                <td class="text-end small" style="font-family:monospace">@(string.IsNullOrEmpty(r.K1_BeginPeriod_End) ? "—" : r.K1_BeginPeriod_End)</td>
+                <td class="text-end small" style="font-family:monospace">@(string.IsNullOrEmpty(r.K1_InPeriod_Start) ? "—" : r.K1_InPeriod_Start)</td>
+                <td class="text-end small" style="font-family:monospace">@(string.IsNullOrEmpty(r.K1_InPeriod_End) ? "—" : r.K1_InPeriod_End)</td>
+                <td class="text-end small border-start" style="font-family:monospace">@(string.IsNullOrEmpty(r.K2_TongSo_Start) ? "—" : r.K2_TongSo_Start)</td>
+                <td class="text-end small" style="font-family:monospace">@(string.IsNullOrEmpty(r.K2_TongSo_End) ? "—" : r.K2_TongSo_End)</td>
+                <td class="text-end" style="color:#059669">@r.K2_TotalUsed.ToString("N0")</td>
+                <td class="text-end" style="color:#dc2626" title="@r.K2_ListInvoiceNoDel">@r.K2_TotalDel.ToString("N0")</td>
+                <td class="text-end small border-start" style="font-family:monospace">@(string.IsNullOrEmpty(r.K3_EndPeriod_Start) ? "—" : r.K3_EndPeriod_Start)</td>
+                <td class="text-end small" style="font-family:monospace">@(string.IsNullOrEmpty(r.K3_EndPeriod_End) ? "—" : r.K3_EndPeriod_End)</td>
+                <td class="text-end fw-semibold">@r.K3_EndPeriod_Remain.ToString("N0")</td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="15" class="text-center text-muted py-4">Không có mẫu hóa đơn nào trong kỳ (hoặc ngoài phạm vi MST được xem).</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>K1 = tồn đầu kỳ + phát hành trong kỳ · K2 = số sử dụng (ISSUED) và xóa bỏ (DELETED/CANCELED) trong kỳ · K3 = tồn cuối kỳ còn lại.
+        Số hiển thị 7 chữ số (đệm 0) theo đúng định dạng báo cáo gốc.
+    </p>
+</div></div>

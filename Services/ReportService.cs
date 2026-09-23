@@ -52,6 +52,25 @@ public record InvoiceUsageResult(
     List<InvoiceUsageRow> Rows,
     long TotalK1, long TotalUsed, long TotalDel, long TotalRemain);
 
+/// <summary>
+/// Một dòng của báo cáo hóa đơn đã sử dụng chi tiết theo loại/ký hiệu/mẫu số (Rpt_InvoiceInvoice_ResultUsed).
+/// K1 = tồn đầu kỳ + phát hành trong kỳ; K2 = sử dụng/xóa bỏ/hủy trong kỳ; K3 = tồn cuối kỳ.
+/// </summary>
+public record InvoiceResultUsedRow(
+    string TInvoiceCode, string InvoiceType, string InvoiceTypeName, string FormNo, string Sign,
+    long K1_TongSo,
+    string K1_BeginPeriod_Start, string K1_BeginPeriod_End,
+    string K1_InPeriod_Start, string K1_InPeriod_End,
+    string K2_TongSo_Start, string K2_TongSo_End, long K2_Total, long K2_TotalUsed,
+    long K2_TotalDel, string K2_ListInvoiceNoDel,
+    string K3_EndPeriod_Start, string K3_EndPeriod_End, long K3_EndPeriod_Remain);
+
+/// <summary>Kết quả báo cáo hóa đơn đã sử dụng chi tiết: các dòng + số liệu cộng dồn + phạm vi MST được xem.</summary>
+public record InvoiceResultUsedResult(
+    DateTime From, DateTime To, string UserCode, bool IsSysAdmin, List<string> AllowedMsts,
+    List<InvoiceResultUsedRow> Rows,
+    long TotalK1, long TotalUsed, long TotalDel, long TotalRemain);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
@@ -61,6 +80,10 @@ public interface IReportService
 
     Task<InvoiceUsageResult> InvoiceUsageAsync(DateTime from, DateTime to,
         string? invoiceType = null, string? sign = null, string? formNo = null);
+
+    Task<InvoiceResultUsedResult> InvoiceResultUsedAsync(DateTime from, DateTime to,
+        string? invoiceType = null, string? sign = null, string? formNo = null,
+        string? mst = null, string? userCode = null);
 }
 
 /// <summary>
@@ -266,6 +289,124 @@ public class ReportService(AppDbContext db) : IReportService
 
         return new InvoiceUsageResult(dFrom, dTo, rows,
             rows.Sum(r => r.K1_TongSo), rows.Sum(r => r.K2_TotalUsed),
+            rows.Sum(r => r.K2_TotalDel), rows.Sum(r => r.K3_EndPeriod_Remain));
+    }
+
+    /// <summary>
+    /// Báo cáo hóa đơn đã sử dụng chi tiết theo loại/ký hiệu/mẫu số (Rpt_InvoiceInvoice_ResultUsed).
+    /// Port từ Rpt_InvoiceInvoice_ResultUsedX_New20200131 (MobileGate) — gộp các bảng tạm #tbl_K1/#tbl_K2/#tbl_K3 thành LINQ.
+    ///   K1: tồn đầu kỳ (số HĐ có ngày lập &lt; đầu kỳ) + phát hành trong kỳ (mẫu có EffDateStart trong kỳ).
+    ///   K2: số sử dụng (ISSUED), số xóa bỏ (DELETED) + danh sách số HĐ xóa, số hủy (CANCELED).
+    ///   K3: tồn cuối kỳ = từ số → đến số còn lại sau khi trừ số đã dùng/xóa.
+    /// PHÂN QUYỀN THEO MST (Mst_NNT_ViewAbility): nếu user là SysAdmin → xem toàn bộ MST;
+    /// ngược lại chỉ xem các MST khớp MSTBUPattern của NNT gắn với user (LIKE).
+    /// </summary>
+    public async Task<InvoiceResultUsedResult> InvoiceResultUsedAsync(DateTime from, DateTime to,
+        string? invoiceType = null, string? sign = null, string? formNo = null,
+        string? mst = null, string? userCode = null)
+    {
+        var dFrom = from.Date;
+        var dTo = to.Date;
+
+        // ── Phân quyền theo MST (Mst_NNT_ViewAbility) ──
+        // Lấy user hiện hành (mặc định "admin" nếu không chỉ định).
+        var user = await db.SysUsers.FirstOrDefaultAsync(u => u.UserCode == (userCode ?? "admin"));
+        var isSysAdmin = user?.FlagSysAdmin ?? true;
+
+        // Tập MST được phép xem: SysAdmin → tất cả NNT đang hoạt động; ngược lại → NNT khớp MSTBUPattern của user.
+        var nnts = await db.MstNnts.Where(n => n.FlagActive).ToListAsync();
+        List<string> allowedMsts;
+        if (isSysAdmin)
+        {
+            allowedMsts = nnts.Select(n => n.MST).ToList();
+        }
+        else
+        {
+            // MSTBUPattern là mẫu LIKE (vd "ALL.0101234567%") — so khớp tiền tố trước '%'.
+            var pattern = nnts.FirstOrDefault(n => n.MST == user!.MST)?.MSTBUPattern ?? "";
+            var prefix = pattern.Contains('%') ? pattern[..pattern.IndexOf('%')] : pattern;
+            allowedMsts = nnts.Where(n => n.MSTBUPattern.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                                          || n.MST == user!.MST)
+                              .Select(n => n.MST).ToList();
+        }
+
+        // B1: các mẫu hóa đơn đang hoạt động, có ngày hiệu lực <= cuối kỳ (lọc theo loại/ký hiệu/mẫu số/MST).
+        var templates = await db.InvoiceTemplates
+            .Where(t => t.FlagActive && t.EffDateStart <= dTo)
+            .Where(t => allowedMsts.Contains(t.MST))
+            .Where(t => string.IsNullOrEmpty(invoiceType) || t.InvoiceType == invoiceType)
+            .Where(t => string.IsNullOrEmpty(sign) || t.Sign == sign)
+            .Where(t => string.IsNullOrEmpty(formNo) || t.FormNo == formNo)
+            .Where(t => string.IsNullOrEmpty(mst) || t.MST == mst)
+            .OrderBy(t => t.InvoiceType).ThenBy(t => t.Sign)
+            .ToListAsync();
+
+        var codes = templates.Select(t => t.TInvoiceCode).ToList();
+        var invoices = await db.Invoices
+            .Where(i => codes.Contains(i.TInvoiceCode) && i.InvoiceNo != null)
+            .ToListAsync();
+
+        // Tên loại hóa đơn (Mst_InvoiceType.InvoiceTypeName) — suy ra từ dữ liệu mẫu.
+        var typeNames = templates.GroupBy(t => t.InvoiceType)
+            .ToDictionary(g => g.Key, g => g.First().TInvoiceName);
+
+        var rows = new List<InvoiceResultUsedRow>();
+        foreach (var t in templates)
+        {
+            var mine = invoices.Where(i => i.TInvoiceCode == t.TInvoiceCode).ToList();
+
+            // ── K1: tồn đầu kỳ + phát hành trong kỳ ──
+            var beforePeriod = mine.Where(i => i.InvoiceDate.Date < dFrom).ToList();
+            long? k1BeginStart = null, k1BeginEnd = null;
+            if (t.EffDateStart.Date < dFrom)
+            {
+                var maxBefore = beforePeriod.Any() ? beforePeriod.Max(i => i.InvoiceNo!.Value) : (long?)null;
+                k1BeginStart = maxBefore.HasValue ? maxBefore.Value + 1 : t.StartInvoiceNo;
+                k1BeginEnd = t.EndInvoiceNo;
+            }
+            long? k1InStart = null, k1InEnd = null;
+            if (t.EffDateStart.Date >= dFrom && t.EffDateStart.Date <= dTo)
+            {
+                k1InStart = t.StartInvoiceNo;
+                k1InEnd = t.EndInvoiceNo;
+            }
+            long a = (k1InStart.HasValue && k1InEnd.HasValue) ? k1InEnd.Value - k1InStart.Value + 1 : 0;
+            long b = (k1BeginStart.HasValue && k1BeginEnd.HasValue) ? k1BeginEnd.Value - k1BeginStart.Value + 1 : 0;
+            var k1TongSo = a + b;
+
+            // ── K2: sử dụng / xóa bỏ / hủy trong kỳ ──
+            var inPeriod = mine.Where(i => i.InvoiceDate.Date >= dFrom && i.InvoiceDate.Date <= dTo
+                        && (i.InvoiceStatus == "ISSUED" || i.InvoiceStatus == "DELETED" || i.InvoiceStatus == "CANCELED")).ToList();
+            long? k2Start = inPeriod.Any() ? inPeriod.Min(i => i.InvoiceNo!.Value) : null;
+            long? k2End = inPeriod.Any() ? inPeriod.Max(i => i.InvoiceNo!.Value) : null;
+            var k2Total = (k2Start.HasValue && k2End.HasValue) ? k2End.Value - k2Start.Value + 1 : 0;
+            var k2Used = inPeriod.Count(i => i.InvoiceStatus == "ISSUED");
+            var deleted = inPeriod.Where(i => i.InvoiceStatus == "DELETED" || i.InvoiceStatus == "CANCELED")
+                        .OrderBy(i => i.InvoiceNo).ToList();
+            var k2Del = deleted.Count;
+            var k2ListDel = string.Join(",", deleted.Select(i => i.InvoiceNo));
+
+            // ── K3: tồn cuối kỳ ──
+            var maxAll = mine.Any() ? mine.Max(i => i.InvoiceNo!.Value) : (long?)null;
+            long? k3Start = maxAll.HasValue ? maxAll.Value + 1 : t.StartInvoiceNo;
+            long? k3End = t.EndInvoiceNo;
+            var k3Remain = (k3Start.HasValue && k3End.HasValue && k3End.Value >= k3Start.Value)
+                ? k3End.Value - k3Start.Value + 1 : 0;
+
+            // Định dạng số 7 chữ số (REPLICATE('0',7-LEN(...)) trong SQL gốc).
+            string Pad(long? v) => v.HasValue ? v.Value.ToString("D7") : "";
+
+            rows.Add(new InvoiceResultUsedRow(
+                t.TInvoiceCode, t.InvoiceType, typeNames.GetValueOrDefault(t.InvoiceType, t.InvoiceType),
+                t.FormNo, t.Sign,
+                k1TongSo,
+                Pad(k1BeginStart), Pad(k1BeginEnd), Pad(k1InStart), Pad(k1InEnd),
+                Pad(k2Start), Pad(k2End), k2Total, k2Used, k2Del, k2ListDel,
+                Pad(k3Start), Pad(k3End), k3Remain));
+        }
+
+        return new InvoiceResultUsedResult(dFrom, dTo, user?.UserCode ?? (userCode ?? "admin"), isSysAdmin, allowedMsts,
+            rows, rows.Sum(r => r.K1_TongSo), rows.Sum(r => r.K2_TotalUsed),
             rows.Sum(r => r.K2_TotalDel), rows.Sum(r => r.K3_EndPeriod_Remain));
     }
 }

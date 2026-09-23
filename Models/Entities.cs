@@ -94,3 +94,33 @@ public class InvoiceLicense : IOrgOwned
     public long TotalQtyCancel { get; set; }          // đã hủy
     public bool FlagActive { get; set; } = true;
 }
+
+/// <summary>
+/// Người nộp thuế (Mst_NNT) — danh mục MST dùng cho phân quyền xem dữ liệu.
+/// MSTBUPattern là mẫu LIKE (vd "ALL.0313304214%") xác định các MST mà một user được phép xem.
+/// </summary>
+public class MstNnt : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string MST { get; set; } = "";             // MST người nộp thuế
+    public string NNTFullName { get; set; } = "";     // tên NNT
+    public string NNTAddress { get; set; } = "";      // địa chỉ
+    public string MSTBUPattern { get; set; } = "";    // mẫu LIKE phân quyền xem (ViewAbility)
+    public bool FlagActive { get; set; } = true;
+}
+
+/// <summary>
+/// Người dùng hệ thống (Sys_User) — dùng cho phân quyền theo MST (Mst_NNT_ViewAbility).
+/// FlagSysAdmin = true → xem toàn bộ MST; ngược lại chỉ xem MST khớp MSTBUPattern của NNT gắn với user.
+/// </summary>
+public class SysUser : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string UserCode { get; set; } = "";        // mã đăng nhập
+    public string UserName { get; set; } = "";        // tên hiển thị
+    public string MST { get; set; } = "";             // MST của user (gắn tới Mst_NNT)
+    public bool FlagSysAdmin { get; set; }            // quản trị hệ thống → xem tất cả
+    public bool FlagActive { get; set; } = true;
+}
