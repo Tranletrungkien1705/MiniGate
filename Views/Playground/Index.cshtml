@@ -1,0 +1,49 @@
+@{
+    ViewData["Title"] = "Thử cổng";
+    var routes = (List<GwRoute>)ViewBag.Routes;
+    var result = ViewBag.Result;
+}
+<div class="row g-3">
+    <div class="col-lg-5"><div class="card"><div class="card-body">
+        <h6 class="fw-bold mb-3"><i class="bi bi-play-circle me-2"></i>Gọi API qua cổng</h6>
+        <form asp-action="Send" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-2"><label class="form-label small text-muted">Tuyến</label>
+                <select name="prefix" class="form-select">
+                    @foreach (var r in routes) { <option value="@r.Prefix" selected="@((string?)ViewBag.Prefix == r.Prefix)">@r.Name (/gw/@r.Prefix)</option> }
+                </select></div>
+            <div class="row g-2 mb-2">
+                <div class="col-4"><label class="form-label small text-muted">Method</label>
+                    <select name="method" class="form-select"><option>GET</option><option>POST</option></select></div>
+                <div class="col-8"><label class="form-label small text-muted">Đường dẫn upstream</label>
+                    <input name="path" class="form-control" value="@(ViewBag.Path ?? "api/products")" placeholder="api/products" /></div>
+            </div>
+            <div class="mb-3"><label class="form-label small text-muted">X-Api-Key (nếu tuyến yêu cầu)</label>
+                <input name="apiKey" class="form-control" value="@(ViewBag.ApiKey)" placeholder="gk_demo_mobile" /></div>
+            <button class="btn btn-primary w-100"><i class="bi bi-send me-1"></i>Gửi qua cổng</button>
+        </form>
+        <div class="text-muted small mt-3">Ví dụ: tuyến <code>pim</code> + path <code>api/products</code> → cổng forward tới <code>minipim.onrender.com/api/products</code>.</div>
+    </div></div></div>
+    <div class="col-lg-7">
+        @if (result != null)
+        {
+            <div class="card"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0">Kết quả</h6>
+                    @{ var st = (int)result.Status; var css = st == 0 ? "dark" : st < 300 ? "success" : st < 500 ? "warning" : "danger"; }
+                    <span class="badge bg-@css fs-6">@st</span>
+                </div>
+                <div class="small text-muted mb-1">@result.Url</div>
+                <div class="small mb-2">Tuyến: <b>@result.Route</b> · Độ trễ: <b>@result.Latency ms</b></div>
+                <pre class="p-3 rounded" style="background:#0f172a;color:#a7f3d0;max-height:440px;overflow:auto;font-size:12px">@result.Body</pre>
+            </div></div>
+        }
+        else
+        {
+            <div class="card"><div class="card-body text-center text-muted py-5">
+                <i class="bi bi-arrow-left-circle" style="font-size:32px"></i>
+                <p class="mt-2 mb-0">Chọn tuyến và bấm <b>Gửi qua cổng</b> để xem cổng forward request tới dịch vụ upstream.</p>
+            </div></div>
+        }
+    </div>
+</div>
