@@ -147,3 +147,35 @@ public class SysUserInGroup : IOrgOwned
     public string UserCode { get; set; } = "";        // mã user
     public string GroupCode { get; set; } = "";       // mã nhóm
 }
+
+/// <summary>
+/// Nhóm mẫu hóa đơn (Invoice_TempGroup) — gom các mẫu hóa đơn theo một bộ trường tùy biến.
+/// Dùng cho danh sách nhóm mẫu (RptSv_Invoice_TempGroup_Get).
+/// </summary>
+public class InvoiceTempGroup : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string InvoiceTGroupCode { get; set; } = "";  // mã nhóm mẫu
+    public string MST { get; set; } = "";                 // MST người nộp thuế
+    public string InvoiceTGroupName { get; set; } = "";   // tên nhóm mẫu
+    public string InvoiceTGroupBody { get; set; } = "";   // nội dung/thân nhóm mẫu
+    public string FilePathThumbnail { get; set; } = "";   // ảnh thu nhỏ
+    public string Spec_Prd_Type { get; set; } = "";       // loại sản phẩm đặc thù
+    public bool FlagActive { get; set; } = true;
+}
+
+/// <summary>
+/// Trường tùy biến của nhóm mẫu (Invoice_TempGroupField) — liên kết nhóm mẫu ↔ trường DB.
+/// DBFieldName trỏ tới Invoice_CustomField / Invoice_DtlCustomField.
+/// </summary>
+public class InvoiceTempGroupField : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string InvoiceTGroupCode { get; set; } = "";  // mã nhóm mẫu
+    public string DBFieldName { get; set; } = "";         // tên trường DB
+    public string NetworkId { get; set; } = "";           // mạng/đại lý
+    public string TCFType { get; set; } = "";             // loại trường (TCFType)
+    public bool FlagActive { get; set; } = true;
+}

@@ -100,6 +100,24 @@ public record SysGroupListResult(
     int RecordStart, int RecordCount, long TotalCount,
     List<SysGroupRow> Rows);
 
+/// <summary>
+/// Một dòng của danh sách nhóm mẫu hóa đơn (Invoice_TempGroup) — kèm danh sách trường tùy biến.
+/// </summary>
+public record InvoiceTempGroupRow(
+    int Idx, string InvoiceTGroupCode, string InvoiceTGroupName, string MST,
+    string InvoiceTGroupBody, string FilePathThumbnail, string Spec_Prd_Type, bool FlagActive,
+    List<InvoiceTempGroupFieldRow> Fields);
+
+/// <summary>Một trường tùy biến của nhóm mẫu (Invoice_TempGroupField join Invoice_CustomField/Invoice_DtlCustomField).</summary>
+public record InvoiceTempGroupFieldRow(
+    string DBFieldName, string TCFType, string NetworkId, bool FlagActive,
+    string InvoiceCustomFieldName, string InvoiceDtlCustomFieldName);
+
+/// <summary>Kết quả danh sách nhóm mẫu: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record InvoiceTempGroupListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<InvoiceTempGroupRow> Rows);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
@@ -119,6 +137,9 @@ public interface IReportService
 
     Task<SysGroupListResult> SysGroupListAsync(int recordStart = 0, int recordCount = 50,
         string? groupCode = null, string? userCode = null, bool? flagActive = null);
+
+    Task<InvoiceTempGroupListResult> InvoiceTempGroupListAsync(int recordStart = 0, int recordCount = 50,
+        string? invoiceTGroupCode = null, string? mst = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -540,5 +561,48 @@ public class ReportService(AppDbContext db) : IReportService
         }).ToList();
 
         return new SysGroupListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách nhóm mẫu hóa đơn (RptSv_Invoice_TempGroup_Get) — endpoint tổng hợp: trả về danh sách
+    /// nhóm mẫu (có phân trang + lọc theo mã nhóm / MST / trạng thái) kèm danh sách trường tùy biến.
+    /// Port từ RptSv_Invoice_TempGroup_Get (MobileGate) — gộp các bảng tạm #tbl_Invoice_TempGroup_Filter_Draft/#tbl_Invoice_TempGroup_Filter
+    /// và hai khối select Invoice_TempGroup / Invoice_TempGroupField thành truy vấn LINQ.
+    /// </summary>
+    public async Task<InvoiceTempGroupListResult> InvoiceTempGroupListAsync(int recordStart = 0, int recordCount = 50,
+        string? invoiceTGroupCode = null, string? mst = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc nhóm mẫu theo mã / MST / trạng thái (tương ứng #tbl_Invoice_TempGroup_Filter_Draft).
+        var groups = await db.InvoiceTempGroups
+            .Where(g => string.IsNullOrEmpty(invoiceTGroupCode) || g.InvoiceTGroupCode == invoiceTGroupCode)
+            .Where(g => string.IsNullOrEmpty(mst) || g.MST == mst)
+            .Where(g => flagActive == null || g.FlagActive == flagActive)
+            .OrderBy(g => g.InvoiceTGroupCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Invoice_TempGroup_Filter với MyIdxSeq).
+        var total = groups.Count;
+        var page = groups.Skip(recordStart).Take(recordCount).ToList();
+
+        // B3: gắn danh sách trường tùy biến của từng nhóm (tương ứng khối select Invoice_TempGroupField).
+        var fields = await db.InvoiceTempGroupFields.ToListAsync();
+        var fieldsByGroup = fields
+            .GroupBy(f => f.InvoiceTGroupCode)
+            .ToDictionary(g => g.Key, g => g.OrderBy(f => f.DBFieldName).ToList());
+
+        var rows = page.Select((g, i) =>
+        {
+            var flds = fieldsByGroup.GetValueOrDefault(g.InvoiceTGroupCode, new List<InvoiceTempGroupField>())
+                .Select(f => new InvoiceTempGroupFieldRow(
+                    f.DBFieldName, f.TCFType, f.NetworkId, f.FlagActive,
+                    f.DBFieldName, f.DBFieldName)).ToList();
+            return new InvoiceTempGroupRow(recordStart + i + 1, g.InvoiceTGroupCode, g.InvoiceTGroupName, g.MST,
+                g.InvoiceTGroupBody, g.FilePathThumbnail, g.Spec_Prd_Type, g.FlagActive, flds);
+        }).ToList();
+
+        return new InvoiceTempGroupListResult(recordStart, recordCount, total, rows);
     }
 }

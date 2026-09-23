@@ -1,0 +1,83 @@
+@model InvoiceTempGroupListResult
+@{ ViewData["Title"] = "Danh sách nhóm mẫu hóa đơn"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-collection me-1"></i>Danh sách nhóm mẫu hóa đơn (RptSv_Invoice_TempGroup_Get)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Mã nhóm mẫu</label><input name="invoiceTGroupCode" value="@ViewBag.InvoiceTGroupCode" class="form-control form-control-sm" placeholder="VD: ITG.001" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">MST</label><input name="mst" value="@ViewBag.MST" class="form-control form-control-sm" placeholder="VD: 0101234567" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Trạng thái</label>
+            <select name="flagActive" class="form-select form-select-sm">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.FlagActive as string))">Tất cả</option>
+                <option value="1" selected="@(ViewBag.FlagActive == "1")">Đang hoạt động</option>
+                <option value="0" selected="@(ViewBag.FlagActive == "0")">Ngừng hoạt động</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Bắt đầu (RecordStart)</label><input type="number" name="recordStart" value="@ViewBag.RecordStart" class="form-control form-control-sm" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Số dòng (RecordCount)</label><input type="number" name="recordCount" value="@ViewBag.RecordCount" class="form-control form-control-sm" /></div>
+        <div class="col-12 col-md-1"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i></button></div>
+    </form>
+</div></div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tổng số nhóm mẫu khớp lọc</div><div class="stat-num">@Model.TotalCount.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Đang hiển thị</div><div class="stat-num" style="color:#059669">@Model.Rows.Count</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Trang (RecordStart)</div><div class="stat-num" style="color:#047857">@Model.RecordStart</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Kích thước trang</div><div class="stat-num">@Model.RecordCount</div></div></div></div>
+</div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Nhóm mẫu hóa đơn</h6>
+        <span class="text-muted small">@Model.Rows.Count / @Model.TotalCount bản ghi</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Mã nhóm mẫu</th>
+                <th>Tên nhóm mẫu</th>
+                <th>MST</th>
+                <th>Loại SP</th>
+                <th class="text-center">Trạng thái</th>
+                <th class="text-center">Số trường</th>
+                <th>Trường tùy biến</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.InvoiceTGroupCode</td>
+                <td>@r.InvoiceTGroupName</td>
+                <td class="small" style="font-family:monospace">@(string.IsNullOrEmpty(r.MST) ? "—" : r.MST)</td>
+                <td class="small">@(string.IsNullOrEmpty(r.Spec_Prd_Type) ? "—" : r.Spec_Prd_Type)</td>
+                <td class="text-center">
+                    @if (r.FlagActive) { <span class="badge" style="background:#059669">Hoạt động</span> }
+                    else { <span class="badge bg-secondary">Ngừng</span> }
+                </td>
+                <td class="text-center fw-semibold">@r.Fields.Count</td>
+                <td>
+                    @if (r.Fields.Count == 0) { <span class="text-muted small">—</span> }
+                    else
+                    {
+                        @foreach (var f in r.Fields)
+                        {
+                            <span class="badge bg-light text-dark me-1 mb-1" title="@f.TCFType · @f.NetworkId">
+                                @f.DBFieldName
+                                @if (!f.FlagActive) { <i class="bi bi-slash-circle ms-1 text-muted"></i> }
+                            </span>
+                        }
+                    }
+                </td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="8" class="text-center text-muted py-4">Không có nhóm mẫu nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh sách nhóm mẫu (phân trang theo RecordStart/RecordCount) kèm danh sách trường tùy biến (Invoice_TempGroupField join Invoice_CustomField/Invoice_DtlCustomField).
+    </p>
+</div></div>

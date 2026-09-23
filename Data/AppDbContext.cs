@@ -19,6 +19,8 @@ public class AppDbContext : DbContext
     public DbSet<SysUser> SysUsers => Set<SysUser>();
     public DbSet<SysGroup> SysGroups => Set<SysGroup>();
     public DbSet<SysUserInGroup> SysUserInGroups => Set<SysUserInGroup>();
+    public DbSet<InvoiceTempGroup> InvoiceTempGroups => Set<InvoiceTempGroup>();
+    public DbSet<InvoiceTempGroupField> InvoiceTempGroupFields => Set<InvoiceTempGroupField>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -34,6 +36,8 @@ public class AppDbContext : DbContext
         b.Entity<SysUser>(e => { e.HasIndex(x => new { x.OrgId, x.UserCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<SysGroup>(e => { e.HasIndex(x => new { x.OrgId, x.GroupCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<SysUserInGroup>(e => { e.HasIndex(x => new { x.OrgId, x.UserCode, x.GroupCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<InvoiceTempGroup>(e => { e.HasIndex(x => new { x.OrgId, x.InvoiceTGroupCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<InvoiceTempGroupField>(e => { e.HasIndex(x => new { x.OrgId, x.InvoiceTGroupCode, x.DBFieldName }); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

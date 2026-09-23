@@ -143,6 +143,16 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.GroupCode = groupCode; ViewBag.UserCode = userCode; ViewBag.FlagActive = flagActive;
         return View(await svc.SysGroupListAsync(start, count, groupCode, userCode, active));
     }
+
+    public async Task<IActionResult> TempGroups(int? recordStart, int? recordCount, string? invoiceTGroupCode, string? mst, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.InvoiceTGroupCode = invoiceTGroupCode; ViewBag.MST = mst; ViewBag.FlagActive = flagActive;
+        return View(await svc.InvoiceTempGroupListAsync(start, count, invoiceTGroupCode, mst, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

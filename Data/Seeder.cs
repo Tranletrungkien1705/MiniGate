@@ -92,6 +92,25 @@ public static class Seeder
                 new SysUserInGroup { UserCode = "nnt_b", GroupCode = "GRP_DL" });
             await db.SaveChangesAsync();
         }
+        // Nhóm mẫu hóa đơn (Invoice_TempGroup) + trường tùy biến (Invoice_TempGroupField) cho danh sách nhóm mẫu.
+        if (!await db.InvoiceTempGroups.AnyAsync())
+        {
+            db.InvoiceTempGroups.AddRange(
+                new InvoiceTempGroup { InvoiceTGroupCode = "ITG.001", InvoiceTGroupName = "Nhóm mẫu GTGT cơ bản", MST = "0101234567", InvoiceTGroupBody = "Mẫu hóa đơn GTGT tiêu chuẩn", Spec_Prd_Type = "NORMAL" },
+                new InvoiceTempGroup { InvoiceTGroupCode = "ITG.002", InvoiceTGroupName = "Nhóm mẫu bán xe", MST = "0101234567", InvoiceTGroupBody = "Mẫu hóa đơn cho showroom ô tô", Spec_Prd_Type = "CAR" },
+                new InvoiceTempGroup { InvoiceTGroupCode = "ITG.003", InvoiceTGroupName = "Nhóm mẫu đại lý B", MST = "0107654321", InvoiceTGroupBody = "Mẫu hóa đơn cho đại lý", Spec_Prd_Type = "DEALER", FlagActive = false });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.InvoiceTempGroupFields.AnyAsync())
+        {
+            db.InvoiceTempGroupFields.AddRange(
+                new InvoiceTempGroupField { InvoiceTGroupCode = "ITG.001", DBFieldName = "BuyerName", NetworkId = "NET-DEMO", TCFType = "TEXT" },
+                new InvoiceTempGroupField { InvoiceTGroupCode = "ITG.001", DBFieldName = "BuyerTaxCode", NetworkId = "NET-DEMO", TCFType = "TEXT" },
+                new InvoiceTempGroupField { InvoiceTGroupCode = "ITG.002", DBFieldName = "CarPlate", NetworkId = "NET-DEMO", TCFType = "TEXT" },
+                new InvoiceTempGroupField { InvoiceTGroupCode = "ITG.002", DBFieldName = "CarEngineNo", NetworkId = "NET-DEMO", TCFType = "TEXT" },
+                new InvoiceTempGroupField { InvoiceTGroupCode = "ITG.003", DBFieldName = "DealerCode", NetworkId = "NET-DEMO", TCFType = "TEXT", FlagActive = false });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)
