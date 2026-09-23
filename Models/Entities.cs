@@ -244,3 +244,37 @@ public class MapDealerDiscount : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
+
+/// <summary>
+/// Đối tượng/chức năng hệ thống (RptSv_Sys_Object) — danh mục các đối tượng phân quyền
+/// (màn hình/nghiệp vụ) mà nhóm có thể được cấp quyền truy cập.
+/// Dùng cho danh sách quyền truy cập của nhóm (RptSv_Sys_Access_Get).
+/// </summary>
+public class SysObject : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string ObjectCode { get; set; } = "";      // mã đối tượng
+    public string NetworkID { get; set; } = "";       // mạng/đại lý
+    public string ObjectName { get; set; } = "";      // tên đối tượng
+    public string ServiceCode { get; set; } = "";     // mã dịch vụ
+    public string ObjectType { get; set; } = "";      // loại đối tượng
+    public string FlagExecModal { get; set; } = "";   // chạy dạng modal
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}
+
+/// <summary>
+/// Quyền truy cập của nhóm theo đối tượng (RptSv_Sys_Access) — liên kết nhóm (GroupCode) ↔ đối tượng (ObjectCode).
+/// Dùng cho danh sách quyền truy cập của nhóm (RptSv_Sys_Access_Get).
+/// </summary>
+public class SysAccess : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string GroupCode { get; set; } = "";       // mã nhóm
+    public string ObjectCode { get; set; } = "";      // mã đối tượng
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}

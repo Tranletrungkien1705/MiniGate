@@ -24,6 +24,8 @@ public class AppDbContext : DbContext
     public DbSet<LicOrder> LicOrders => Set<LicOrder>();
     public DbSet<LicOrderCommission> LicOrderCommissions => Set<LicOrderCommission>();
     public DbSet<MapDealerDiscount> MapDealerDiscounts => Set<MapDealerDiscount>();
+    public DbSet<SysObject> SysObjects => Set<SysObject>();
+    public DbSet<SysAccess> SysAccesses => Set<SysAccess>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -44,6 +46,8 @@ public class AppDbContext : DbContext
         b.Entity<LicOrder>(e => { e.HasIndex(x => new { x.OrgId, x.OrderId }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<LicOrderCommission>(e => { e.HasIndex(x => new { x.OrgId, x.OrderId }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MapDealerDiscount>(e => { e.HasIndex(x => new { x.OrgId, x.DLCode, x.DiscountCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<SysObject>(e => { e.HasIndex(x => new { x.OrgId, x.ObjectCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<SysAccess>(e => { e.HasIndex(x => new { x.OrgId, x.GroupCode, x.ObjectCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

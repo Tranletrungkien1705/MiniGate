@@ -140,6 +140,29 @@ public static class Seeder
                 new MapDealerDiscount { DLCode = "DL003", DiscountCode = "DC20", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Đối tượng/chức năng (RptSv_Sys_Object) + quyền truy cập của nhóm (RptSv_Sys_Access).
+        if (!await db.SysObjects.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.SysObjects.AddRange(
+                new SysObject { ObjectCode = "OBJ_INVOICE", ObjectName = "Quản lý hóa đơn", ServiceCode = "INVOICE", ObjectType = "SCREEN", FlagExecModal = "0", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysObject { ObjectCode = "OBJ_REPORT", ObjectName = "Báo cáo tổng hợp", ServiceCode = "REPORT", ObjectType = "SCREEN", FlagExecModal = "0", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysObject { ObjectCode = "OBJ_USER", ObjectName = "Quản lý người dùng", ServiceCode = "SYS", ObjectType = "SCREEN", FlagExecModal = "1", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysObject { ObjectCode = "OBJ_DEALER", ObjectName = "Quản lý đại lý", ServiceCode = "SYS", ObjectType = "SCREEN", FlagExecModal = "0", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "admin" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.SysAccesses.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.SysAccesses.AddRange(
+                new SysAccess { GroupCode = "GRP_ADMIN", ObjectCode = "OBJ_INVOICE", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysAccess { GroupCode = "GRP_ADMIN", ObjectCode = "OBJ_REPORT", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysAccess { GroupCode = "GRP_ADMIN", ObjectCode = "OBJ_USER", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysAccess { GroupCode = "GRP_KT", ObjectCode = "OBJ_INVOICE", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysAccess { GroupCode = "GRP_KT", ObjectCode = "OBJ_REPORT", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new SysAccess { GroupCode = "GRP_DL", ObjectCode = "OBJ_DEALER", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

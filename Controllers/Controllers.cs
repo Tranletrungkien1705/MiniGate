@@ -173,6 +173,15 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.DLCode = dlCode; ViewBag.DiscountCode = discountCode; ViewBag.FlagActive = flagActive;
         return View(await svc.MapDealerDiscountListAsync(start, count, dlCode, discountCode, active));
     }
+
+    public async Task<IActionResult> Access(int? recordStart, int? recordCount, string? groupCode, string? objectCode)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.GroupCode = groupCode; ViewBag.ObjectCode = objectCode;
+        return View(await svc.SysAccessListAsync(start, count, groupCode, objectCode));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

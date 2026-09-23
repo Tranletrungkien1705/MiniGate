@@ -152,6 +152,20 @@ public record MapDealerDiscountListResult(
     int RecordStart, int RecordCount, long TotalCount,
     List<MapDealerDiscountRow> Rows);
 
+/// <summary>
+/// Một dòng của danh sách quyền truy cập của nhóm (RptSv_Sys_Access) —
+/// liên kết nhóm (GroupCode) ↔ đối tượng/chức năng (ObjectCode) kèm thông tin đối tượng.
+/// </summary>
+public record SysAccessRow(
+    int Idx, string GroupCode, string ObjectCode,
+    string ObjectName, string ServiceCode, string ObjectType, string FlagExecModal, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách quyền truy cập của nhóm: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record SysAccessListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<SysAccessRow> Rows);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
@@ -180,6 +194,9 @@ public interface IReportService
 
     Task<MapDealerDiscountListResult> MapDealerDiscountListAsync(int recordStart = 0, int recordCount = 50,
         string? dlCode = null, string? discountCode = null, bool? flagActive = null);
+
+    Task<SysAccessListResult> SysAccessListAsync(int recordStart = 0, int recordCount = 50,
+        string? groupCode = null, string? objectCode = null);
 }
 
 /// <summary>
@@ -732,5 +749,47 @@ public class ReportService(AppDbContext db) : IReportService
             m.LogLUDTimeUTC, m.LogLUBy)).ToList();
 
         return new MapDealerDiscountListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách quyền truy cập của nhóm theo đối tượng (RptSv_Sys_Access_Get) — endpoint tổng hợp:
+    /// trả về danh sách liên kết nhóm (GroupCode) ↔ đối tượng/chức năng (ObjectCode) kèm thông tin
+    /// đối tượng (tên/dịch vụ/loại/chạy modal/trạng thái), có phân trang + lọc theo mã nhóm / mã đối tượng.
+    /// Port từ RptSv_Sys_Access_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_RptSv_Sys_Access_Filter_Draft/#tbl_RptSv_Sys_Access_Filter và khối select
+    /// RptSv_Sys_Access join RptSv_Sys_Object thành truy vấn LINQ.
+    /// </summary>
+    public async Task<SysAccessListResult> SysAccessListAsync(int recordStart = 0, int recordCount = 50,
+        string? groupCode = null, string? objectCode = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc quyền truy cập theo mã nhóm / mã đối tượng (tương ứng #tbl_RptSv_Sys_Access_Filter_Draft).
+        var items = await db.SysAccesses
+            .Where(a => string.IsNullOrEmpty(groupCode) || a.GroupCode == groupCode)
+            .Where(a => string.IsNullOrEmpty(objectCode) || a.ObjectCode == objectCode)
+            .OrderBy(a => a.GroupCode).ThenBy(a => a.ObjectCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_RptSv_Sys_Access_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        // B3: gắn thông tin đối tượng (tương ứng left join RptSv_Sys_Object).
+        var objects = await db.SysObjects.ToListAsync();
+        var objByCode = objects.ToDictionary(o => o.ObjectCode, o => o);
+
+        var rows = page.Select((a, i) =>
+        {
+            objByCode.TryGetValue(a.ObjectCode, out var o);
+            return new SysAccessRow(
+                recordStart + i + 1, a.GroupCode, a.ObjectCode,
+                o?.ObjectName ?? "", o?.ServiceCode ?? "", o?.ObjectType ?? "", o?.FlagExecModal ?? "",
+                o?.FlagActive ?? false,
+                a.LogLUDTimeUTC, a.LogLUBy);
+        }).ToList();
+
+        return new SysAccessListResult(recordStart, recordCount, total, rows);
     }
 }
