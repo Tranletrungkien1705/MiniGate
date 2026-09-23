@@ -1,0 +1,88 @@
+@model LicOrderCommissionResult
+@{ ViewData["Title"] = "Hoa hồng đơn hàng license"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-cash-coin me-1"></i>Hoa hồng đơn hàng license (RptSv_InosLicOrder_Commission)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Từ ngày</label><input type="date" name="from" value="@ViewBag.From" class="form-control form-control-sm" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Đến ngày</label><input type="date" name="to" value="@ViewBag.To" class="form-control form-control-sm" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Mã đại lý (DLCode)</label><input name="dlCode" value="@ViewBag.DLCode" class="form-control form-control-sm" placeholder="VD: DL001" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">MST</label><input name="mst" value="@ViewBag.MST" class="form-control form-control-sm" placeholder="VD: 0101234567" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Trạng thái hoa hồng</label>
+            <select name="commissionStatus" class="form-select form-select-sm">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.CommissionStatus as string))">Tất cả</option>
+                <option value="PENDING" selected="@(ViewBag.CommissionStatus == "PENDING")">Chờ duyệt</option>
+                <option value="APPROVED" selected="@(ViewBag.CommissionStatus == "APPROVED")">Đã duyệt</option>
+                <option value="PAID" selected="@(ViewBag.CommissionStatus == "PAID")">Đã trả</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Xem</button></div>
+    </form>
+</div></div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Số đơn hàng</div><div class="stat-num">@Model.TotalOrders.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tổng giá bán</div><div class="stat-num" style="color:#047857">@Model.TotalPrice.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tổng chiết khấu</div><div class="stat-num" style="color:#b45309">@Model.TotalDiscount.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tổng hoa hồng</div><div class="stat-num" style="color:#059669">@Model.TotalCommission.ToString("N0")</div></div></div></div>
+</div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Danh sách đơn hàng &amp; hoa hồng</h6>
+        <span class="text-muted small">@Model.Rows.Count bản ghi</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Mã đơn</th>
+                <th>Tổ chức</th>
+                <th>MST / Đại lý</th>
+                <th class="text-end">Giá vốn</th>
+                <th class="text-end">Giá bán</th>
+                <th class="text-end">Chiết khấu</th>
+                <th>Trạng thái HĐ</th>
+                <th class="text-center">Hoa hồng</th>
+                <th class="text-end">Tổng HH</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.OrderId</td>
+                <td>@r.OrgName</td>
+                <td class="small" style="font-family:monospace">@(string.IsNullOrEmpty(r.MST) ? "—" : r.MST)@(string.IsNullOrEmpty(r.DLCode) ? "" : " / " + r.DLCode)</td>
+                <td class="text-end small">@r.TotalCost.ToString("N0")</td>
+                <td class="text-end small">@r.Price.ToString("N0")</td>
+                <td class="text-end small fw-semibold" style="color:#b45309">@r.DiscountVal.ToString("N0")</td>
+                <td class="small">
+                    @if (string.IsNullOrEmpty(r.CommissionStatus)) { <span class="badge bg-secondary">Chưa có HH</span> }
+                    else if (r.CommissionStatus == "PAID") { <span class="badge" style="background:#059669">Đã trả</span> }
+                    else if (r.CommissionStatus == "APPROVED") { <span class="badge" style="background:#047857">Đã duyệt</span> }
+                    else { <span class="badge bg-warning text-dark">Chờ duyệt</span> }
+                </td>
+                <td class="text-center">
+                    @if (r.CommissionTotal == 0) { <span class="text-muted small">—</span> }
+                    else
+                    {
+                        @if (!string.IsNullOrEmpty(r.Presenter1)) { <span class="badge bg-light text-dark me-1 mb-1" title="Trình bày 1: @r.Presenter1">PB1 @r.CommissionPresenter1.ToString("N0")</span> }
+                        @if (!string.IsNullOrEmpty(r.Presenter2)) { <span class="badge bg-light text-dark me-1 mb-1" title="Trình bày 2: @r.Presenter2">PB2 @r.CommissionPresenter2.ToString("N0")</span> }
+                        @if (!string.IsNullOrEmpty(r.Telesale)) { <span class="badge bg-light text-dark me-1 mb-1" title="Telesale: @r.Telesale">TS @r.CommissionTelesale.ToString("N0")</span> }
+                        @if (!string.IsNullOrEmpty(r.Consultants)) { <span class="badge bg-light text-dark me-1 mb-1" title="Tư vấn: @r.Consultants">TV @r.CommissionConsultants.ToString("N0")</span> }
+                        @if (!string.IsNullOrEmpty(r.Implementer)) { <span class="badge bg-light text-dark me-1 mb-1" title="Triển khai: @r.Implementer">TK @r.CommissionImplementer.ToString("N0")</span> }
+                    }
+                </td>
+                <td class="text-end fw-semibold" style="color:#059669">@r.CommissionTotal.ToString("N0")</td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="10" class="text-center text-muted py-4">Không có đơn hàng nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh sách đơn hàng license kèm giá trị chiết khấu (giá bán − giá vốn) và hoa hồng theo từng vai trò (trình bày/telesale/tư vấn/triển khai), lọc theo mã đại lý / MST / trạng thái hoa hồng.
+    </p>
+</div></div>

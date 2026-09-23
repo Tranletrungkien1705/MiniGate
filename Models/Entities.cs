@@ -179,3 +179,53 @@ public class InvoiceTempGroupField : IOrgOwned
     public string TCFType { get; set; } = "";             // loại trường (TCFType)
     public bool FlagActive { get; set; } = true;
 }
+
+/// <summary>
+/// Đơn hàng license (LicOrder) — đơn mua gói/bản quyền phần mềm hóa đơn.
+/// Dùng cho báo cáo hoa hồng đơn hàng license (RptSv_InosLicOrder_Commission).
+/// </summary>
+public class LicOrder : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public long OrderId { get; set; }                 // mã đơn hàng (OrderId)
+    public string OrgName { get; set; } = "";        // tên tổ chức mua (InosLicOrderOrgName)
+    public string DiscountCode { get; set; } = "";   // mã chiết khấu (InosLicOrderDiscountCode)
+    public decimal TotalCost { get; set; }            // giá vốn (InosLicOrderTotalCost)
+    public decimal Price { get; set; }                // giá bán (InosLicOrderPrice)
+    public string PaymentCode { get; set; } = "";    // mã thanh toán (InosLicOrderPaymentCode)
+    public string PaymentStatusDesc { get; set; } = ""; // mô tả trạng thái thanh toán
+    public string OrderStatus { get; set; } = "";    // trạng thái đơn (InosLicOrderStatus)
+    public string PaymentStatus { get; set; } = "";  // trạng thái thanh toán (InosLicPaymentStatuses)
+    public DateTime CreateDTime { get; set; }         // thời điểm tạo đơn
+    public DateTime? ApproveDTime { get; set; }       // thời điểm duyệt đơn
+    public string CreateUserId { get; set; } = "";   // người tạo
+    public string Remark { get; set; } = "";         // ghi chú
+    public long InosOrgId { get; set; }               // id tổ chức (InosOrgId)
+    public long InosNetworkId { get; set; }           // id mạng/đại lý (InosNetworkId)
+    public string MST { get; set; } = "";            // MST người nộp thuế (join Mst_NNT)
+    public string DLCode { get; set; } = "";         // mã đại lý (join Mst_NNT)
+}
+
+/// <summary>
+/// Hoa hồng đơn hàng license (RptSv_InosLicOrder_Commission) — thông tin hoa hồng theo vai trò
+/// (người trình bày/telesale/tư vấn/triển khai) gắn với một đơn hàng license.
+/// </summary>
+public class LicOrderCommission : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public long OrderId { get; set; }                 // trỏ tới LicOrder.OrderId
+    public string CommissionStatus { get; set; } = ""; // trạng thái hoa hồng (PENDING/APPROVED/PAID)
+    public string Remark { get; set; } = "";         // ghi chú hoa hồng
+    public string Presenter1 { get; set; } = "";     // người trình bày 1
+    public string Presenter2 { get; set; } = "";     // người trình bày 2
+    public string Telesale { get; set; } = "";       // telesale
+    public string Consultants { get; set; } = "";    // tư vấn
+    public string Implementer { get; set; } = "";    // người triển khai
+    public decimal CommissionPresenter1 { get; set; }
+    public decimal CommissionPresenter2 { get; set; }
+    public decimal CommissionTelesale { get; set; }
+    public decimal CommissionConsultants { get; set; }
+    public decimal CommissionImplementer { get; set; }
+}

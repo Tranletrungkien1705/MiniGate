@@ -118,6 +118,27 @@ public record InvoiceTempGroupListResult(
     int RecordStart, int RecordCount, long TotalCount,
     List<InvoiceTempGroupRow> Rows);
 
+/// <summary>
+/// Một dòng của báo cáo hoa hồng đơn hàng license (RptSv_InosLicOrder_Commission) —
+/// thông tin đơn hàng + giá trị chiết khấu + hoa hồng theo từng vai trò.
+/// </summary>
+public record LicOrderCommissionRow(
+    int Idx, long OrderId, string OrgName, string DiscountCode,
+    decimal TotalCost, decimal Price, decimal DiscountVal,
+    string PaymentCode, string PaymentStatusDesc, string OrderStatus, string PaymentStatus,
+    DateTime CreateDTime, DateTime? ApproveDTime, string CreateUserId, string Remark,
+    long InosOrgId, long InosNetworkId, string MST, string DLCode,
+    string CommissionStatus, string CommissionRemark,
+    string Presenter1, string Presenter2, string Telesale, string Consultants, string Implementer,
+    decimal CommissionPresenter1, decimal CommissionPresenter2, decimal CommissionTelesale,
+    decimal CommissionConsultants, decimal CommissionImplementer, decimal CommissionTotal);
+
+/// <summary>Kết quả báo cáo hoa hồng đơn hàng license: các dòng + số liệu cộng dồn.</summary>
+public record LicOrderCommissionResult(
+    DateTime From, DateTime To, string? DLCode, string? MST, string? CommissionStatus,
+    List<LicOrderCommissionRow> Rows,
+    long TotalOrders, decimal TotalPrice, decimal TotalDiscount, decimal TotalCommission);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
@@ -140,6 +161,9 @@ public interface IReportService
 
     Task<InvoiceTempGroupListResult> InvoiceTempGroupListAsync(int recordStart = 0, int recordCount = 50,
         string? invoiceTGroupCode = null, string? mst = null, bool? flagActive = null);
+
+    Task<LicOrderCommissionResult> LicOrderCommissionAsync(DateTime from, DateTime to,
+        string? dlCode = null, string? mst = null, string? commissionStatus = null);
 }
 
 /// <summary>
@@ -604,5 +628,60 @@ public class ReportService(AppDbContext db) : IReportService
         }).ToList();
 
         return new InvoiceTempGroupListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Báo cáo hoa hồng đơn hàng license (RptSv_InosLicOrder_Commission) — endpoint tổng hợp:
+    /// trả về danh sách đơn hàng license kèm giá trị chiết khấu (giá bán - giá vốn) và hoa hồng
+    /// theo từng vai trò (trình bày/telesale/tư vấn/triển khai), lọc theo mã đại lý / MST / trạng thái hoa hồng.
+    /// Port từ RptSv_InosLicOrder_Commission_Get (MobileGate) — gộp các bảng tạm #Tbl_RptSv_InosLicOrder_Commission
+    /// và các join RptSv_InosLicOrder_Commission / MstSv_Inos_Org / Mst_NNT thành truy vấn LINQ.
+    /// </summary>
+    public async Task<LicOrderCommissionResult> LicOrderCommissionAsync(DateTime from, DateTime to,
+        string? dlCode = null, string? mst = null, string? commissionStatus = null)
+    {
+        var dFrom = from.Date;
+        var dTo = to.Date;
+
+        // B1: đơn hàng license trong kỳ (tương ứng #Tbl_RptSv_InosLicOrder_Commission).
+        var orders = await db.LicOrders
+            .Where(o => o.CreateDTime.Date >= dFrom && o.CreateDTime.Date <= dTo)
+            .Where(o => string.IsNullOrEmpty(dlCode) || o.DLCode == dlCode)
+            .Where(o => string.IsNullOrEmpty(mst) || o.MST == mst)
+            .OrderBy(o => o.CreateDTime).ThenBy(o => o.OrderId)
+            .ToListAsync();
+
+        // B2: hoa hồng theo đơn (tương ứng join RptSv_InosLicOrder_Commission).
+        var commissions = await db.LicOrderCommissions.ToListAsync();
+        var commByOrder = commissions.GroupBy(c => c.OrderId).ToDictionary(g => g.Key, g => g.First());
+
+        var rows = new List<LicOrderCommissionRow>();
+        var idx = 0;
+        foreach (var o in orders)
+        {
+            commByOrder.TryGetValue(o.OrderId, out var c);
+            var status = c?.CommissionStatus ?? "";
+            // Lọc theo trạng thái hoa hồng (tương ứng @strCommissionStatus).
+            if (!string.IsNullOrEmpty(commissionStatus) && status != commissionStatus) continue;
+
+            var discountVal = o.Price - o.TotalCost;
+            var commTotal = (c?.CommissionPresenter1 ?? 0) + (c?.CommissionPresenter2 ?? 0)
+                          + (c?.CommissionTelesale ?? 0) + (c?.CommissionConsultants ?? 0)
+                          + (c?.CommissionImplementer ?? 0);
+
+            rows.Add(new LicOrderCommissionRow(
+                ++idx, o.OrderId, o.OrgName, o.DiscountCode,
+                o.TotalCost, o.Price, discountVal,
+                o.PaymentCode, o.PaymentStatusDesc, o.OrderStatus, o.PaymentStatus,
+                o.CreateDTime, o.ApproveDTime, o.CreateUserId, o.Remark,
+                o.InosOrgId, o.InosNetworkId, o.MST, o.DLCode,
+                status, c?.Remark ?? "",
+                c?.Presenter1 ?? "", c?.Presenter2 ?? "", c?.Telesale ?? "", c?.Consultants ?? "", c?.Implementer ?? "",
+                c?.CommissionPresenter1 ?? 0, c?.CommissionPresenter2 ?? 0, c?.CommissionTelesale ?? 0,
+                c?.CommissionConsultants ?? 0, c?.CommissionImplementer ?? 0, commTotal));
+        }
+
+        return new LicOrderCommissionResult(dFrom, dTo, dlCode, mst, commissionStatus, rows,
+            rows.Count, rows.Sum(r => r.Price), rows.Sum(r => r.DiscountVal), rows.Sum(r => r.CommissionTotal));
     }
 }

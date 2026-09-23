@@ -153,6 +153,16 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.InvoiceTGroupCode = invoiceTGroupCode; ViewBag.MST = mst; ViewBag.FlagActive = flagActive;
         return View(await svc.InvoiceTempGroupListAsync(start, count, invoiceTGroupCode, mst, active));
     }
+
+    public async Task<IActionResult> Commissions(DateTime? from, DateTime? to, string? dlCode, string? mst, string? commissionStatus)
+    {
+        var f = from ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        var t = to ?? DateTime.Now;
+        ViewBag.From = f.ToString("yyyy-MM-dd");
+        ViewBag.To = t.ToString("yyyy-MM-dd");
+        ViewBag.DLCode = dlCode; ViewBag.MST = mst; ViewBag.CommissionStatus = commissionStatus;
+        return View(await svc.LicOrderCommissionAsync(f, t, dlCode, mst, commissionStatus));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

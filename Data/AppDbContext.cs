@@ -21,6 +21,8 @@ public class AppDbContext : DbContext
     public DbSet<SysUserInGroup> SysUserInGroups => Set<SysUserInGroup>();
     public DbSet<InvoiceTempGroup> InvoiceTempGroups => Set<InvoiceTempGroup>();
     public DbSet<InvoiceTempGroupField> InvoiceTempGroupFields => Set<InvoiceTempGroupField>();
+    public DbSet<LicOrder> LicOrders => Set<LicOrder>();
+    public DbSet<LicOrderCommission> LicOrderCommissions => Set<LicOrderCommission>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -38,6 +40,8 @@ public class AppDbContext : DbContext
         b.Entity<SysUserInGroup>(e => { e.HasIndex(x => new { x.OrgId, x.UserCode, x.GroupCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<InvoiceTempGroup>(e => { e.HasIndex(x => new { x.OrgId, x.InvoiceTGroupCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<InvoiceTempGroupField>(e => { e.HasIndex(x => new { x.OrgId, x.InvoiceTGroupCode, x.DBFieldName }); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<LicOrder>(e => { e.HasIndex(x => new { x.OrgId, x.OrderId }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<LicOrderCommission>(e => { e.HasIndex(x => new { x.OrgId, x.OrderId }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

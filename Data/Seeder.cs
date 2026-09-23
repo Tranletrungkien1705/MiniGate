@@ -111,6 +111,24 @@ public static class Seeder
                 new InvoiceTempGroupField { InvoiceTGroupCode = "ITG.003", DBFieldName = "DealerCode", NetworkId = "NET-DEMO", TCFType = "TEXT", FlagActive = false });
             await db.SaveChangesAsync();
         }
+        // Đơn hàng license (LicOrder) + hoa hồng (LicOrderCommission) cho báo cáo hoa hồng đơn hàng license.
+        if (!await db.LicOrders.AnyAsync())
+        {
+            var day = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(5);
+            db.LicOrders.AddRange(
+                new LicOrder { OrderId = 1001, OrgName = "Công ty Demo A", DiscountCode = "DC10", TotalCost = 8_000_000m, Price = 10_000_000m, PaymentCode = "PAY-1001", PaymentStatusDesc = "Đã thanh toán", OrderStatus = "APPROVED", PaymentStatus = "PAID", CreateDTime = day, ApproveDTime = day.AddDays(1), CreateUserId = "admin", Remark = "Đơn gói HDDT 1 năm", InosOrgId = 501, InosNetworkId = 1, MST = "0101234567", DLCode = "DL001" },
+                new LicOrder { OrderId = 1002, OrgName = "Công ty Demo B", DiscountCode = "DC05", TotalCost = 4_500_000m, Price = 5_000_000m, PaymentCode = "PAY-1002", PaymentStatusDesc = "Chờ thanh toán", OrderStatus = "PENDING", PaymentStatus = "UNPAID", CreateDTime = day.AddDays(2), CreateUserId = "nnt_a", Remark = "Đơn gói HDDT 6 tháng", InosOrgId = 502, InosNetworkId = 2, MST = "0107654321", DLCode = "DL002" },
+                new LicOrder { OrderId = 1003, OrgName = "Công ty Demo A", DiscountCode = "DC15", TotalCost = 17_000_000m, Price = 20_000_000m, PaymentCode = "PAY-1003", PaymentStatusDesc = "Đã thanh toán", OrderStatus = "APPROVED", PaymentStatus = "PAID", CreateDTime = day.AddDays(3), ApproveDTime = day.AddDays(4), CreateUserId = "admin", Remark = "Đơn gói HDDT 2 năm", InosOrgId = 501, InosNetworkId = 1, MST = "0101234567", DLCode = "DL001" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.LicOrderCommissions.AnyAsync())
+        {
+            db.LicOrderCommissions.AddRange(
+                new LicOrderCommission { OrderId = 1001, CommissionStatus = "PAID", Remark = "Đã chi trả", Presenter1 = "ketoan_a", Telesale = "ketoan_b", Implementer = "admin", CommissionPresenter1 = 500_000m, CommissionTelesale = 300_000m, CommissionImplementer = 200_000m },
+                new LicOrderCommission { OrderId = 1002, CommissionStatus = "PENDING", Remark = "Chờ duyệt", Presenter1 = "ketoan_a", Consultants = "ketoan_b", CommissionPresenter1 = 250_000m, CommissionConsultants = 150_000m },
+                new LicOrderCommission { OrderId = 1003, CommissionStatus = "APPROVED", Remark = "Đã duyệt chờ trả", Presenter1 = "ketoan_a", Presenter2 = "ketoan_b", Telesale = "ketoan_b", Implementer = "admin", CommissionPresenter1 = 1_000_000m, CommissionPresenter2 = 400_000m, CommissionTelesale = 600_000m, CommissionImplementer = 500_000m });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)
