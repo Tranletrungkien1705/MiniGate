@@ -382,6 +382,19 @@ public static class Seeder
                 new NotifyNotifyDtl { NotifyNo = "NTV.003", UserCode = "nnt_b", FlagRead = true, FlagActive = false, CreateDTimeUTC = day.AddMonths(-2), CreateBy = "nnt_b", LogLUDTimeUTC = day, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục quốc gia (Mst_Country) cho danh sách quốc gia (Mst_Country_Get).
+        if (!await db.MstCountries.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstCountries.AddRange(
+                new MstCountry { CountryCode = "VN", CountryName = "Việt Nam", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstCountry { CountryCode = "US", CountryName = "Hoa Kỳ", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstCountry { CountryCode = "JP", CountryName = "Nhật Bản", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstCountry { CountryCode = "KR", CountryName = "Hàn Quốc", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstCountry { CountryCode = "SG", CountryName = "Singapore", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" },
+                new MstCountry { CountryCode = "XX", CountryName = "Quốc gia cũ (ngừng)", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

@@ -372,6 +372,16 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.NotifyNo = notifyNo; ViewBag.NotifyType = notifyType; ViewBag.UserCode = userCode; ViewBag.FlagActive = flagActive;
         return View(await svc.NotifyListAsync(start, count, notifyNo, notifyType, userCode, active));
     }
+
+    public async Task<IActionResult> Countries(int? recordStart, int? recordCount, string? countryCode, string? countryName, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.CountryCode = countryCode; ViewBag.CountryName = countryName; ViewBag.FlagActive = flagActive;
+        return View(await svc.CountryListAsync(start, count, countryCode, countryName, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

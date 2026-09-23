@@ -677,3 +677,18 @@ public class NotifyNotifyDtl : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }         // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";          // người cập nhật cuối
 }
+
+/// <summary>
+/// Quốc gia (Mst_Country) — danh mục quốc gia dùng cho địa chỉ/đối tác.
+/// Dùng cho danh sách quốc gia (Mst_Country_Get).
+/// </summary>
+public class MstCountry : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string CountryCode { get; set; } = "";     // mã quốc gia
+    public string CountryName { get; set; } = "";     // tên quốc gia
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }         // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";          // người cập nhật cuối
+}

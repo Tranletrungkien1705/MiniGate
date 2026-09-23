@@ -356,6 +356,19 @@ public record NotifyListResult(
     List<NotifyRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách quốc gia (Mst_Country) —
+/// mã/tên quốc gia, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record CountryRow(
+    int Idx, string CountryCode, string CountryName, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách quốc gia: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record CountryListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<CountryRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách giải pháp hệ thống (Sys_Solution) —
 /// mã/tên giải pháp, mạng-đại lý, trạng thái và thông tin cập nhật cuối.
 /// </summary>
@@ -531,6 +544,9 @@ public interface IReportService
 
     Task<NotifyListResult> NotifyListAsync(int recordStart = 0, int recordCount = 50,
         string? notifyNo = null, string? notifyType = null, string? userCode = null, bool? flagActive = null);
+
+    Task<CountryListResult> CountryListAsync(int recordStart = 0, int recordCount = 50,
+        string? countryCode = null, string? countryName = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1858,5 +1874,36 @@ public class ReportService(AppDbContext db) : IReportService
             detailsByNotify.GetValueOrDefault(n.NotifyNo, new List<NotifyDtlRow>()))).ToList();
 
         return new NotifyListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách quốc gia (Mst_Country_Get) — endpoint tổng hợp: trả về danh mục quốc gia
+    /// (có phân trang + lọc theo mã quốc gia / tên quốc gia / trạng thái).
+    /// Port từ Mst_Country_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Mst_Country_Filter_Draft/#tbl_Mst_Country_Filter và khối select Mst_Country thành truy vấn LINQ.
+    /// </summary>
+    public async Task<CountryListResult> CountryListAsync(int recordStart = 0, int recordCount = 50,
+        string? countryCode = null, string? countryName = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc quốc gia theo mã / tên / trạng thái (tương ứng #tbl_Mst_Country_Filter_Draft).
+        var items = await db.MstCountries
+            .Where(c => string.IsNullOrEmpty(countryCode) || c.CountryCode == countryCode)
+            .Where(c => string.IsNullOrEmpty(countryName) || c.CountryName.Contains(countryName))
+            .Where(c => flagActive == null || c.FlagActive == flagActive)
+            .OrderBy(c => c.CountryCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_Country_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((c, i) => new CountryRow(
+            recordStart + i + 1, c.CountryCode, c.CountryName, c.FlagActive,
+            c.LogLUDTimeUTC, c.LogLUBy)).ToList();
+
+        return new CountryListResult(recordStart, recordCount, total, rows);
     }
 }
