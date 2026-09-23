@@ -438,6 +438,19 @@ public record BizTypeListResult(
     List<BizTypeRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách loại NNT trên hóa đơn (Mst_InvoiceNNTType) —
+/// mã loại NNT, mô tả, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record InvoiceNntTypeRow(
+    int Idx, string InvoiceNNTTypeCode, string Desc, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách loại NNT trên hóa đơn: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record InvoiceNntTypeListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<InvoiceNntTypeRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách cơ quan thuế (Mst_GovTaxID) —
 /// mã/tên cơ quan thuế, cấp trên, đơn vị nghiệp vụ, tỉnh/huyện, cấp, địa chỉ, liên hệ, trạng thái.
 /// </summary>
@@ -574,6 +587,9 @@ public interface IReportService
 
     Task<BizTypeListResult> BizTypeListAsync(int recordStart = 0, int recordCount = 50,
         string? bizType = null, string? networkId = null, bool? flagActive = null);
+
+    Task<InvoiceNntTypeListResult> InvoiceNntTypeListAsync(int recordStart = 0, int recordCount = 50,
+        string? invoiceNntTypeCode = null, string? desc = null, bool? flagActive = null);
 
     Task<GovTaxIdListResult> GovTaxIdListAsync(int recordStart = 0, int recordCount = 50,
         string? govTaxId = null, string? govTaxName = null, string? networkId = null,
@@ -1753,6 +1769,38 @@ public class ReportService(AppDbContext db) : IReportService
             t.LogLUDTimeUTC, t.LogLUBy)).ToList();
 
         return new BizTypeListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách loại NNT trên hóa đơn (Mst_InvoiceNNTType_Get) — endpoint tổng hợp: trả về danh mục
+    /// loại NNT dùng khi lập hóa đơn (có phân trang + lọc theo mã loại / mô tả / trạng thái).
+    /// Port từ Mst_InvoiceNNTType_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Mst_InvoiceNNTType_Filter_Draft/#tbl_Mst_InvoiceNNTType_Filter và khối select Mst_InvoiceNNTType
+    /// thành truy vấn LINQ.
+    /// </summary>
+    public async Task<InvoiceNntTypeListResult> InvoiceNntTypeListAsync(int recordStart = 0, int recordCount = 50,
+        string? invoiceNntTypeCode = null, string? desc = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc loại NNT theo mã / mô tả / trạng thái (tương ứng #tbl_Mst_InvoiceNNTType_Filter_Draft).
+        var items = await db.MstInvoiceNntTypes
+            .Where(t => string.IsNullOrEmpty(invoiceNntTypeCode) || t.InvoiceNNTTypeCode == invoiceNntTypeCode)
+            .Where(t => string.IsNullOrEmpty(desc) || t.Desc.Contains(desc))
+            .Where(t => flagActive == null || t.FlagActive == flagActive)
+            .OrderBy(t => t.InvoiceNNTTypeCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_InvoiceNNTType_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((t, i) => new InvoiceNntTypeRow(
+            recordStart + i + 1, t.InvoiceNNTTypeCode, t.Desc, t.FlagActive,
+            t.LogLUDTimeUTC, t.LogLUBy)).ToList();
+
+        return new InvoiceNntTypeListResult(recordStart, recordCount, total, rows);
     }
 
     /// <summary>

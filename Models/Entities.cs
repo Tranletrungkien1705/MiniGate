@@ -737,3 +737,19 @@ public class InosPackage : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
+
+/// <summary>
+/// Loại người nộp thuế trên hóa đơn (Mst_InvoiceNNTType) — danh mục loại NNT dùng khi lập hóa đơn
+/// (mã loại + mô tả), kèm trạng thái và thông tin cập nhật cuối.
+/// Dùng cho danh sách loại NNT trên hóa đơn (Mst_InvoiceNNTType_Get).
+/// </summary>
+public class MstInvoiceNntType : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string InvoiceNNTTypeCode { get; set; } = "";  // mã loại NNT trên hóa đơn
+    public string Desc { get; set; } = "";                // mô tả loại NNT
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }            // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";             // người cập nhật cuối
+}

@@ -419,6 +419,17 @@ public static class Seeder
                 new InosPackage { PackageId = 5, Name = "Gói cũ (ngừng)", LicenseType = "YEAR", Subscription = "12 tháng", Price = 8_000_000m, ImageUrl = "", IntroUrl = "", Description = "Gói không còn bán", Detail = "Ngừng kinh doanh", IsDiscountable = false, FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục loại NNT trên hóa đơn (Mst_InvoiceNNTType) cho danh sách loại NNT trên hóa đơn (Mst_InvoiceNNTType_Get).
+        if (!await db.MstInvoiceNntTypes.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstInvoiceNntTypes.AddRange(
+                new MstInvoiceNntType { InvoiceNNTTypeCode = "ORG", Desc = "Tổ chức/doanh nghiệp", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstInvoiceNntType { InvoiceNNTTypeCode = "IND", Desc = "Cá nhân", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstInvoiceNntType { InvoiceNNTTypeCode = "HKD", Desc = "Hộ kinh doanh", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstInvoiceNntType { InvoiceNNTTypeCode = "OLD", Desc = "Loại cũ (ngừng)", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

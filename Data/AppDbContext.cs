@@ -49,6 +49,7 @@ public class AppDbContext : DbContext
     public DbSet<MstCountry> MstCountries => Set<MstCountry>();
     public DbSet<MstDepartment> MstDepartments => Set<MstDepartment>();
     public DbSet<InosPackage> InosPackages => Set<InosPackage>();
+    public DbSet<MstInvoiceNntType> MstInvoiceNntTypes => Set<MstInvoiceNntType>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -94,6 +95,7 @@ public class AppDbContext : DbContext
         b.Entity<MstCountry>(e => { e.HasIndex(x => new { x.OrgId, x.CountryCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstDepartment>(e => { e.HasIndex(x => new { x.OrgId, x.DepartmentCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<InosPackage>(e => { e.HasIndex(x => new { x.OrgId, x.PackageId }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<MstInvoiceNntType>(e => { e.HasIndex(x => new { x.OrgId, x.InvoiceNNTTypeCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }
