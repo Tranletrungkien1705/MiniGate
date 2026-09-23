@@ -254,6 +254,23 @@ public record SysModuleListResult(
     List<SysModuleRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách tổ chức iNOS (MstSv_Inos_Org) — kèm tên loại hình (iNOS_Mst_BizType),
+/// lĩnh vực (iNOS_Mst_BizField) và quy mô (iNOS_Mst_BizSize).
+/// </summary>
+public record InosOrgRow(
+    int Idx, string MST, long InosId, long? ParentId, string Name,
+    string BizType, string BizTypeName, string BizField, string BizFieldName,
+    string OrgSize, string BizSizeName,
+    string ContactName, string Email, string PhoneNo, string Description,
+    bool Enable, string CurrentUserRole, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy, long? OrderId);
+
+/// <summary>Kết quả danh sách tổ chức iNOS: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record InosOrgListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<InosOrgRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách người nộp thuế (Mst_NNT) — kèm thông tin cơ quan thuế (Mst_GovTaxID),
 /// tỉnh (Mst_Province), huyện (Mst_District) và đơn hàng license (MstSv_Inos_Org).
 /// </summary>
@@ -341,6 +358,10 @@ public interface IReportService
 
     Task<SysModuleListResult> SysModuleListAsync(int recordStart = 0, int recordCount = 50,
         string? moduleCode = null, string? solutionCode = null, string? networkId = null, bool? flagActive = null);
+
+    Task<InosOrgListResult> InosOrgListAsync(int recordStart = 0, int recordCount = 50,
+        string? mst = null, string? name = null, string? bizType = null, string? bizField = null,
+        string? orgSize = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1229,6 +1250,53 @@ public class ReportService(AppDbContext db) : IReportService
         }).ToList();
 
         return new SysModuleListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách tổ chức iNOS (RptSv_MstSv_Inos_Org_Get) — endpoint tổng hợp: trả về danh sách
+    /// tổ chức (MstSv_Inos_Org) kèm tên loại hình (iNOS_Mst_BizType), lĩnh vực (iNOS_Mst_BizField)
+    /// và quy mô (iNOS_Mst_BizSize), có phân trang + lọc theo MST / tên / loại hình / lĩnh vực / quy mô / trạng thái.
+    /// Port từ RptSv_MstSv_Inos_Org_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_MstSv_Inos_Org_Filter_Draft/#tbl_MstSv_Inos_Org_Filter và khối select
+    /// MstSv_Inos_Org left join iNOS_Mst_BizType/iNOS_Mst_BizField/iNOS_Mst_BizSize thành truy vấn LINQ.
+    /// </summary>
+    public async Task<InosOrgListResult> InosOrgListAsync(int recordStart = 0, int recordCount = 50,
+        string? mst = null, string? name = null, string? bizType = null, string? bizField = null,
+        string? orgSize = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc tổ chức theo MST / tên / loại hình / lĩnh vực / quy mô / trạng thái (tương ứng #tbl_MstSv_Inos_Org_Filter_Draft).
+        var items = await db.MstSvInosOrgs
+            .Where(o => string.IsNullOrEmpty(mst) || o.MST == mst)
+            .Where(o => string.IsNullOrEmpty(name) || o.Name.Contains(name))
+            .Where(o => string.IsNullOrEmpty(bizType) || o.BizType == bizType)
+            .Where(o => string.IsNullOrEmpty(bizField) || o.BizField == bizField)
+            .Where(o => string.IsNullOrEmpty(orgSize) || o.OrgSize == orgSize)
+            .Where(o => flagActive == null || o.FlagActive == flagActive)
+            .OrderBy(o => o.MST)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_MstSv_Inos_Org_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        // B3: gắn tên loại hình/lĩnh vực/quy mô (tương ứng left join iNOS_Mst_BizType/BizField/BizSize).
+        var bizTypes = (await db.InosMstBizTypes.ToListAsync()).ToDictionary(x => x.BizType, x => x.BizTypeName);
+        var bizFields = (await db.InosMstBizFields.ToListAsync()).ToDictionary(x => x.BizFieldCode, x => x.BizFieldName);
+        var bizSizes = (await db.InosMstBizSizes.ToListAsync()).ToDictionary(x => x.BizSizeCode, x => x.BizSizeName);
+
+        var rows = page.Select((o, i) => new InosOrgRow(
+            recordStart + i + 1, o.MST, o.InosId, o.ParentId, o.Name,
+            o.BizType, bizTypes.TryGetValue(o.BizType, out var bt) ? bt : "",
+            o.BizField, bizFields.TryGetValue(o.BizField, out var bf) ? bf : "",
+            o.OrgSize, bizSizes.TryGetValue(o.OrgSize, out var bs) ? bs : "",
+            o.ContactName, o.Email, o.PhoneNo, o.Description,
+            o.Enable, o.CurrentUserRole, o.FlagActive,
+            o.LogLUDTimeUTC, o.LogLUBy, o.OrderId)).ToList();
+
+        return new InosOrgListResult(recordStart, recordCount, total, rows);
     }
 
     /// <summary>

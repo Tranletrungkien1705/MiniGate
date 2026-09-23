@@ -263,6 +263,17 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.InvoiceType = invoiceType; ViewBag.NetworkID = networkId; ViewBag.FlagActive = flagActive;
         return View(await svc.InvoiceTypeListAsync(start, count, invoiceType, networkId, active));
     }
+
+    public async Task<IActionResult> InosOrgs(int? recordStart, int? recordCount, string? mst, string? name, string? bizType, string? bizField, string? orgSize, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.MST = mst; ViewBag.Name = name; ViewBag.BizType = bizType;
+        ViewBag.BizField = bizField; ViewBag.OrgSize = orgSize; ViewBag.FlagActive = flagActive;
+        return View(await svc.InosOrgListAsync(start, count, mst, name, bizType, bizField, orgSize, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

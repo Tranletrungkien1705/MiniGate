@@ -459,3 +459,79 @@ public class SysModule : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
+
+/// <summary>
+/// Loại hình kinh doanh (iNOS_Mst_BizType) — danh mục loại hình (BizType) dùng cho tổ chức iNOS.
+/// Dùng cho danh sách tổ chức iNOS (RptSv_MstSv_Inos_Org_Get).
+/// </summary>
+public class InosMstBizType : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string BizType { get; set; } = "";        // mã loại hình kinh doanh
+    public string NetworkID { get; set; } = "";      // mạng/đại lý
+    public string BizTypeName { get; set; } = "";    // tên loại hình kinh doanh
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}
+
+/// <summary>
+/// Lĩnh vực kinh doanh (iNOS_Mst_BizField) — danh mục lĩnh vực (BizField) dùng cho tổ chức iNOS.
+/// Dùng cho danh sách tổ chức iNOS (RptSv_MstSv_Inos_Org_Get).
+/// </summary>
+public class InosMstBizField : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string BizFieldCode { get; set; } = "";   // mã lĩnh vực kinh doanh
+    public string NetworkID { get; set; } = "";      // mạng/đại lý
+    public string BizFieldName { get; set; } = "";   // tên lĩnh vực kinh doanh
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}
+
+/// <summary>
+/// Quy mô tổ chức (iNOS_Mst_BizSize) — danh mục quy mô (BizSize) dùng cho tổ chức iNOS.
+/// Dùng cho danh sách tổ chức iNOS (RptSv_MstSv_Inos_Org_Get).
+/// </summary>
+public class InosMstBizSize : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string BizSizeCode { get; set; } = "";    // mã quy mô tổ chức
+    public string NetworkID { get; set; } = "";      // mạng/đại lý
+    public string BizSizeName { get; set; } = "";    // tên quy mô tổ chức
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}
+
+/// <summary>
+/// Tổ chức iNOS (MstSv_Inos_Org) — tổ chức/đơn vị trong hệ sinh thái iNOS, gắn với MST,
+/// loại hình (BizType), lĩnh vực (BizField) và quy mô (OrgSize).
+/// Dùng cho danh sách tổ chức iNOS (RptSv_MstSv_Inos_Org_Get).
+/// </summary>
+public class MstSvInosOrg : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string MST { get; set; } = "";            // MST người nộp thuế
+    public long InosId { get; set; }                  // id tổ chức (Id)
+    public long? ParentId { get; set; }               // id tổ chức cấp trên (ParentId)
+    public string Name { get; set; } = "";           // tên tổ chức
+    public string BizType { get; set; } = "";        // loại hình kinh doanh (join iNOS_Mst_BizType)
+    public string BizField { get; set; } = "";       // lĩnh vực kinh doanh (join iNOS_Mst_BizField)
+    public string OrgSize { get; set; } = "";        // quy mô tổ chức (join iNOS_Mst_BizSize)
+    public string ContactName { get; set; } = "";    // người liên hệ
+    public string Email { get; set; } = "";          // email
+    public string PhoneNo { get; set; } = "";        // điện thoại
+    public string Description { get; set; } = "";    // mô tả
+    public bool Enable { get; set; } = true;          // đang kích hoạt
+    public string CurrentUserRole { get; set; } = ""; // vai trò người dùng hiện tại
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+    public long? OrderId { get; set; }                // mã đơn hàng (OrderId)
+}

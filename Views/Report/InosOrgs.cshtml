@@ -1,0 +1,73 @@
+@model InosOrgListResult
+@{ ViewData["Title"] = "Danh sách tổ chức iNOS"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-building-gear me-1"></i>Danh sách tổ chức iNOS (RptSv_MstSv_Inos_Org)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">MST</label><input name="mst" value="@ViewBag.MST" class="form-control form-control-sm" placeholder="VD: 0101234567" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Tên tổ chức</label><input name="name" value="@ViewBag.Name" class="form-control form-control-sm" placeholder="VD: Demo" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Loại hình (BizType)</label><input name="bizType" value="@ViewBag.BizType" class="form-control form-control-sm" placeholder="VD: BT01" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Lĩnh vực (BizField)</label><input name="bizField" value="@ViewBag.BizField" class="form-control form-control-sm" placeholder="VD: BF01" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Quy mô (OrgSize)</label><input name="orgSize" value="@ViewBag.OrgSize" class="form-control form-control-sm" placeholder="VD: BS01" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Trạng thái</label>
+            <select name="flagActive" class="form-select form-select-sm">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.FlagActive as string))">Tất cả</option>
+                <option value="1" selected="@(ViewBag.FlagActive == "1")">Đang hoạt động</option>
+                <option value="0" selected="@(ViewBag.FlagActive == "0")">Ngừng hoạt động</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-1"><label class="form-label small mb-1">Số/trang</label><input type="number" name="recordCount" value="@ViewBag.RecordCount" class="form-control form-control-sm" min="1" /></div>
+        <div class="col-12 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Xem</button></div>
+    </form>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Danh sách tổ chức iNOS</h6>
+        <span class="text-muted small">@Model.TotalCount bản ghi · trang bắt đầu @Model.RecordStart</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>MST</th>
+                <th>Tên tổ chức</th>
+                <th>Loại hình</th>
+                <th>Lĩnh vực</th>
+                <th>Quy mô</th>
+                <th>Liên hệ</th>
+                <th class="text-center">Kích hoạt</th>
+                <th class="text-center">Trạng thái</th>
+                <th>Cập nhật cuối</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.MST</td>
+                <td>@r.Name</td>
+                <td class="small">@(string.IsNullOrEmpty(r.BizTypeName) ? (string.IsNullOrEmpty(r.BizType) ? "—" : r.BizType) : $"{r.BizType} · {r.BizTypeName}")</td>
+                <td class="small">@(string.IsNullOrEmpty(r.BizFieldName) ? (string.IsNullOrEmpty(r.BizField) ? "—" : r.BizField) : $"{r.BizField} · {r.BizFieldName}")</td>
+                <td class="small">@(string.IsNullOrEmpty(r.BizSizeName) ? (string.IsNullOrEmpty(r.OrgSize) ? "—" : r.OrgSize) : $"{r.OrgSize} · {r.BizSizeName}")</td>
+                <td class="small">@(string.IsNullOrEmpty(r.ContactName) ? "—" : r.ContactName)@(string.IsNullOrEmpty(r.PhoneNo) ? "" : $" · {r.PhoneNo}")</td>
+                <td class="text-center">
+                    @if (r.Enable) { <span class="badge" style="background:#059669">Có</span> }
+                    else { <span class="badge bg-secondary">Không</span> }
+                </td>
+                <td class="text-center">
+                    @if (r.FlagActive) { <span class="badge" style="background:#059669">Đang hoạt động</span> }
+                    else { <span class="badge bg-secondary">Ngừng hoạt động</span> }
+                </td>
+                <td class="small">@r.LogLUDTimeUTC.ToString("yyyy-MM-dd HH:mm")</td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="10" class="text-center text-muted py-4">Không có tổ chức iNOS nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh sách tổ chức iNOS (MstSv_Inos_Org) kèm tên loại hình (iNOS_Mst_BizType), lĩnh vực (iNOS_Mst_BizField) và quy mô (iNOS_Mst_BizSize), có phân trang + lọc theo MST / tên / loại hình / lĩnh vực / quy mô / trạng thái.
+    </p>
+</div></div>

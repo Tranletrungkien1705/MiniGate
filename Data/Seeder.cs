@@ -264,6 +264,45 @@ public static class Seeder
                 new MstInvoiceType { InvoiceType = "07GTKT", NetworkID = "NET-DEMO", InvoiceTypeName = "Hóa đơn GTGT (ngừng)", Remark = "Loại cũ không còn dùng", TTType = "GTGT", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục loại hình/lĩnh vực/quy mô (iNOS_Mst_BizType/BizField/BizSize) + tổ chức iNOS (MstSv_Inos_Org)
+        // cho danh sách tổ chức iNOS (RptSv_MstSv_Inos_Org_Get).
+        if (!await db.InosMstBizTypes.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.InosMstBizTypes.AddRange(
+                new InosMstBizType { BizType = "BT01", NetworkID = "NET-DEMO", BizTypeName = "Công ty TNHH", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new InosMstBizType { BizType = "BT02", NetworkID = "NET-DEMO", BizTypeName = "Công ty cổ phần", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new InosMstBizType { BizType = "BT03", NetworkID = "NET-DEMO", BizTypeName = "Hộ kinh doanh", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.InosMstBizFields.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.InosMstBizFields.AddRange(
+                new InosMstBizField { BizFieldCode = "BF01", NetworkID = "NET-DEMO", BizFieldName = "Thương mại", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new InosMstBizField { BizFieldCode = "BF02", NetworkID = "NET-DEMO", BizFieldName = "Sản xuất", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new InosMstBizField { BizFieldCode = "BF03", NetworkID = "NET-DEMO", BizFieldName = "Dịch vụ", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.InosMstBizSizes.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.InosMstBizSizes.AddRange(
+                new InosMstBizSize { BizSizeCode = "BS01", NetworkID = "NET-DEMO", BizSizeName = "Nhỏ", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new InosMstBizSize { BizSizeCode = "BS02", NetworkID = "NET-DEMO", BizSizeName = "Vừa", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new InosMstBizSize { BizSizeCode = "BS03", NetworkID = "NET-DEMO", BizSizeName = "Lớn", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.MstSvInosOrgs.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstSvInosOrgs.AddRange(
+                new MstSvInosOrg { MST = "0101234567", InosId = 501, ParentId = null, Name = "Công ty Demo A", BizType = "BT01", BizField = "BF01", OrgSize = "BS02", ContactName = "Nguyễn Văn A", Email = "a@demo.vn", PhoneNo = "0901234567", Description = "Tổ chức gốc Demo A", Enable = true, CurrentUserRole = "OWNER", LogLUDTimeUTC = upd, LogLUBy = "admin", OrderId = 1001 },
+                new MstSvInosOrg { MST = "0101234567", InosId = 502, ParentId = 501, Name = "Chi nhánh Demo A - HCM", BizType = "BT01", BizField = "BF03", OrgSize = "BS01", ContactName = "Trần Thị B", Email = "hcm@demo.vn", PhoneNo = "0901234568", Description = "Chi nhánh phía Nam", Enable = true, CurrentUserRole = "MEMBER", LogLUDTimeUTC = upd, LogLUBy = "nnt_a", OrderId = 1003 },
+                new MstSvInosOrg { MST = "0107654321", InosId = 503, ParentId = null, Name = "Công ty Demo B", BizType = "BT02", BizField = "BF02", OrgSize = "BS03", ContactName = "Lê Văn C", Email = "b@demo.vn", PhoneNo = "0907654321", Description = "Tổ chức Demo B", Enable = true, CurrentUserRole = "OWNER", LogLUDTimeUTC = upd, LogLUBy = "nnt_b", OrderId = 1002 },
+                new MstSvInosOrg { MST = "0109999999", InosId = 504, ParentId = null, Name = "Hộ kinh doanh Demo C (ngừng)", BizType = "BT03", BizField = "BF01", OrgSize = "BS01", ContactName = "Phạm Thị D", Email = "c@demo.vn", PhoneNo = "0909999999", Description = "Đã ngừng hoạt động", Enable = false, CurrentUserRole = "MEMBER", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)
