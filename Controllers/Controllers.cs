@@ -212,6 +212,15 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.GovIDType = govIdType; ViewBag.NetworkID = networkId; ViewBag.FlagActive = flagActive;
         return View(await svc.GovIdTypeListAsync(start, count, govIdType, networkId, active));
     }
+    public async Task<IActionResult> Provinces(int? recordStart, int? recordCount, string? provinceCode, string? provinceName, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.ProvinceCode = provinceCode; ViewBag.ProvinceName = provinceName; ViewBag.FlagActive = flagActive;
+        return View(await svc.ProvinceListAsync(start, count, provinceCode, provinceName, active));
+    }
 
     public async Task<IActionResult> ObjectInModules(int? recordStart, int? recordCount, string? objectCode, string? moduleCode)
     {

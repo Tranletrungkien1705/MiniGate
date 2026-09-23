@@ -154,7 +154,7 @@ public class MstGovTaxId : IOrgOwned
 
 /// <summary>
 /// Tỉnh/thành (Mst_Province) — danh mục tỉnh dùng cho địa chỉ NNT.
-/// Dùng cho danh sách người nộp thuế (RptSv_Mst_NNT_Get).
+/// Dùng cho danh sách người nộp thuế (RptSv_Mst_NNT_Get) và danh sách tỉnh/thành (RptSv_Mst_Province_Get).
 /// </summary>
 public class MstProvince : IOrgOwned
 {
@@ -163,6 +163,8 @@ public class MstProvince : IOrgOwned
     public string ProvinceCode { get; set; } = "";    // mã tỉnh
     public string ProvinceName { get; set; } = "";    // tên tỉnh
     public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
 
 /// <summary>

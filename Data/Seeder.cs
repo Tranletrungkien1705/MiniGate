@@ -90,10 +90,14 @@ public static class Seeder
         }
         if (!await db.MstProvinces.AnyAsync())
         {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
             db.MstProvinces.AddRange(
-                new MstProvince { ProvinceCode = "01", ProvinceName = "Hà Nội" },
-                new MstProvince { ProvinceCode = "79", ProvinceName = "Hồ Chí Minh" },
-                new MstProvince { ProvinceCode = "48", ProvinceName = "Đà Nẵng" });
+                new MstProvince { ProvinceCode = "01", ProvinceName = "Hà Nội", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstProvince { ProvinceCode = "79", ProvinceName = "Hồ Chí Minh", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstProvince { ProvinceCode = "48", ProvinceName = "Đà Nẵng", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstProvince { ProvinceCode = "31", ProvinceName = "Hải Phòng", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstProvince { ProvinceCode = "92", ProvinceName = "Cần Thơ", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" },
+                new MstProvince { ProvinceCode = "99", ProvinceName = "Tỉnh cũ (ngừng)", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
         if (!await db.MstDistricts.AnyAsync())
