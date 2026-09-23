@@ -388,3 +388,20 @@ public class MstDealer : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
+
+/// <summary>
+/// Phương thức thanh toán (Mst_PaymentMethods) — danh mục hình thức thanh toán dùng khi lập hóa đơn.
+/// Dùng cho danh sách phương thức thanh toán (RptSv_Mst_PaymentMethods_Get).
+/// </summary>
+public class MstPaymentMethod : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string PaymentMethodCode { get; set; } = "";  // mã phương thức thanh toán
+    public string NetworkID { get; set; } = "";          // mạng/đại lý
+    public string PaymentMethodName { get; set; } = "";  // tên phương thức thanh toán
+    public string Remark { get; set; } = "";             // ghi chú
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }           // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";            // người cập nhật cuối
+}

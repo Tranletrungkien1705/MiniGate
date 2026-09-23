@@ -212,6 +212,20 @@ public record MstDealerListResult(
     List<MstDealerRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách phương thức thanh toán (Mst_PaymentMethods) —
+/// mã/tên phương thức, mạng-đại lý, ghi chú, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record PaymentMethodRow(
+    int Idx, string PaymentMethodCode, string NetworkID, string PaymentMethodName,
+    string Remark, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách phương thức thanh toán: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record PaymentMethodListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<PaymentMethodRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách người nộp thuế (Mst_NNT) — kèm thông tin cơ quan thuế (Mst_GovTaxID),
 /// tỉnh (Mst_Province), huyện (Mst_District) và đơn hàng license (MstSv_Inos_Org).
 /// </summary>
@@ -290,6 +304,9 @@ public interface IReportService
     Task<MstDealerListResult> MstDealerListAsync(int recordStart = 0, int recordCount = 50,
         string? dlCode = null, string? dlName = null, string? provinceCode = null,
         string? dlType = null, bool? flagActive = null);
+
+    Task<PaymentMethodListResult> PaymentMethodListAsync(int recordStart = 0, int recordCount = 50,
+        string? paymentMethodCode = null, string? networkId = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1100,5 +1117,39 @@ public class ReportService(AppDbContext db) : IReportService
         }).ToList();
 
         return new MstDealerListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách phương thức thanh toán (RptSv_Mst_PaymentMethods_Get) — endpoint tổng hợp:
+    /// trả về danh mục hình thức thanh toán (mã/tên/mạng-đại lý/ghi chú/trạng thái), có phân trang
+    /// + lọc theo mã phương thức / mạng-đại lý / trạng thái.
+    /// Port từ RptSv_Mst_PaymentMethods_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Mst_PaymentMethods_Filter_Draft/#tbl_Mst_PaymentMethods_Filter và khối select
+    /// Mst_PaymentMethods thành truy vấn LINQ.
+    /// </summary>
+    public async Task<PaymentMethodListResult> PaymentMethodListAsync(int recordStart = 0, int recordCount = 50,
+        string? paymentMethodCode = null, string? networkId = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc phương thức thanh toán theo mã / mạng-đại lý / trạng thái (tương ứng #tbl_Mst_PaymentMethods_Filter_Draft).
+        var items = await db.MstPaymentMethods
+            .Where(p => string.IsNullOrEmpty(paymentMethodCode) || p.PaymentMethodCode == paymentMethodCode)
+            .Where(p => string.IsNullOrEmpty(networkId) || p.NetworkID == networkId)
+            .Where(p => flagActive == null || p.FlagActive == flagActive)
+            .OrderBy(p => p.PaymentMethodCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_PaymentMethods_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((p, i) => new PaymentMethodRow(
+            recordStart + i + 1, p.PaymentMethodCode, p.NetworkID, p.PaymentMethodName,
+            p.Remark, p.FlagActive,
+            p.LogLUDTimeUTC, p.LogLUBy)).ToList();
+
+        return new PaymentMethodListResult(recordStart, recordCount, total, rows);
     }
 }

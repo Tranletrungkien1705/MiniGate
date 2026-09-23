@@ -222,6 +222,17 @@ public static class Seeder
                 new MstDealer { DLCode = "DL003", NetworkID = "NET-DEMO", DLCodeParent = "VPBANK", DLBUCode = "IDOCNET.VPBANK.DL003", DLBUPattern = "IDOCNET.VPBANK.DL003%", DLLevel = "2", DLType = "CAP2", ProvinceCode = "48", DLName = "Đại lý Đà Nẵng (ngừng)", DLAddress = "Quận Hải Châu, Đà Nẵng", DLPresentBy = "Trần Thị D", DLGovIDNumber = "048199003456", DLEmail = "dl003@demo.vn", DLPhoneNo = "0909999999", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục phương thức thanh toán (Mst_PaymentMethods) cho danh sách phương thức thanh toán.
+        if (!await db.MstPaymentMethods.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstPaymentMethods.AddRange(
+                new MstPaymentMethod { PaymentMethodCode = "TM", NetworkID = "NET-DEMO", PaymentMethodName = "Tiền mặt", Remark = "Thanh toán bằng tiền mặt", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstPaymentMethod { PaymentMethodCode = "CK", NetworkID = "NET-DEMO", PaymentMethodName = "Chuyển khoản", Remark = "Thanh toán qua ngân hàng", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstPaymentMethod { PaymentMethodCode = "TM/CK", NetworkID = "NET-DEMO", PaymentMethodName = "Tiền mặt/Chuyển khoản", Remark = "Kết hợp tiền mặt và chuyển khoản", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstPaymentMethod { PaymentMethodCode = "QT", NetworkID = "NET-DEMO", PaymentMethodName = "Quẹt thẻ", Remark = "Thanh toán bằng thẻ ngân hàng", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

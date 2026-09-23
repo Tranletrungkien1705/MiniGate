@@ -233,6 +233,16 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.DLType = dlType; ViewBag.FlagActive = flagActive;
         return View(await svc.MstDealerListAsync(start, count, dlCode, dlName, provinceCode, dlType, active));
     }
+
+    public async Task<IActionResult> PaymentMethods(int? recordStart, int? recordCount, string? paymentMethodCode, string? networkId, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.PaymentMethodCode = paymentMethodCode; ViewBag.NetworkID = networkId; ViewBag.FlagActive = flagActive;
+        return View(await svc.PaymentMethodListAsync(start, count, paymentMethodCode, networkId, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller
