@@ -303,6 +303,16 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.SolutionCode = solutionCode; ViewBag.NetworkID = networkId; ViewBag.FlagActive = flagActive;
         return View(await svc.SysSolutionListAsync(start, count, solutionCode, networkId, active));
     }
+
+    public async Task<IActionResult> NntTypes(int? recordStart, int? recordCount, string? nntType, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.NNTType = nntType; ViewBag.FlagActive = flagActive;
+        return View(await svc.NntTypeListAsync(start, count, nntType, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

@@ -280,6 +280,17 @@ public static class Seeder
                 new MstInvoiceType { InvoiceType = "07GTKT", NetworkID = "NET-DEMO", InvoiceTypeName = "Hóa đơn GTGT (ngừng)", Remark = "Loại cũ không còn dùng", TTType = "GTGT", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục loại người nộp thuế (Mst_NNTType) cho danh sách loại người nộp thuế (RptSv_Mst_NNTType_Get).
+        if (!await db.MstNntTypes.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstNntTypes.AddRange(
+                new MstNntType { NNTType = "ORG", NNTTypeName = "Tổ chức/Doanh nghiệp", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstNntType { NNTType = "IND", NNTTypeName = "Cá nhân", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstNntType { NNTType = "HKD", NNTTypeName = "Hộ kinh doanh", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstNntType { NNTType = "OLD", NNTTypeName = "Loại cũ (ngừng)", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
         // Danh mục loại hình/lĩnh vực/quy mô (iNOS_Mst_BizType/BizField/BizSize) + tổ chức iNOS (MstSv_Inos_Org)
         // cho danh sách tổ chức iNOS (RptSv_MstSv_Inos_Org_Get).
         if (!await db.InosMstBizTypes.AnyAsync())

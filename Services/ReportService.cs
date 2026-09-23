@@ -309,6 +309,19 @@ public record SysSolutionListResult(
     List<SysSolutionRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách loại người nộp thuế (Mst_NNTType) —
+/// mã/tên loại NNT, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record NntTypeRow(
+    int Idx, string NNTType, string NNTTypeName, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách loại người nộp thuế: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record NntTypeListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<NntTypeRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách người nộp thuế (Mst_NNT) — kèm thông tin cơ quan thuế (Mst_GovTaxID),
 /// tỉnh (Mst_Province), huyện (Mst_District) và đơn hàng license (MstSv_Inos_Org).
 /// </summary>
@@ -408,6 +421,9 @@ public interface IReportService
 
     Task<SysSolutionListResult> SysSolutionListAsync(int recordStart = 0, int recordCount = 50,
         string? solutionCode = null, string? networkId = null, bool? flagActive = null);
+
+    Task<NntTypeListResult> NntTypeListAsync(int recordStart = 0, int recordCount = 50,
+        string? nntType = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1470,5 +1486,35 @@ public class ReportService(AppDbContext db) : IReportService
             s.LogLUDTimeUTC, s.LogLUBy)).ToList();
 
         return new SysSolutionListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách loại người nộp thuế (RptSv_Mst_NNTType_Get) — endpoint tổng hợp: trả về danh mục
+    /// loại NNT (mã/tên/trạng thái), có phân trang + lọc theo mã loại NNT / trạng thái.
+    /// Port từ RptSv_Mst_NNTType_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Mst_NNTType_Filter_Draft/#tbl_Mst_NNTType_Filter và khối select Mst_NNTType thành LINQ.
+    /// </summary>
+    public async Task<NntTypeListResult> NntTypeListAsync(int recordStart = 0, int recordCount = 50,
+        string? nntType = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc loại NNT theo mã / trạng thái (tương ứng #tbl_Mst_NNTType_Filter_Draft).
+        var items = await db.MstNntTypes
+            .Where(t => string.IsNullOrEmpty(nntType) || t.NNTType == nntType)
+            .Where(t => flagActive == null || t.FlagActive == flagActive)
+            .OrderBy(t => t.NNTType)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_NNTType_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((t, i) => new NntTypeRow(
+            recordStart + i + 1, t.NNTType, t.NNTTypeName, t.FlagActive,
+            t.LogLUDTimeUTC, t.LogLUBy)).ToList();
+
+        return new NntTypeListResult(recordStart, recordCount, total, rows);
     }
 }

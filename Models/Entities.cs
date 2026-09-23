@@ -445,6 +445,22 @@ public class MstInvoiceType : IOrgOwned
 }
 
 /// <summary>
+/// Loại người nộp thuế (Mst_NNTType) — danh mục loại NNT (tổ chức/cá nhân/hộ kinh doanh...)
+/// dùng khi đăng ký người nộp thuế.
+/// Dùng cho danh sách loại người nộp thuế (RptSv_Mst_NNTType_Get).
+/// </summary>
+public class MstNntType : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string NNTType { get; set; } = "";        // mã loại NNT
+    public string NNTTypeName { get; set; } = "";    // tên loại NNT
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}
+
+/// <summary>
 /// Giải pháp hệ thống (Sys_Solution) — nhóm các mô-đun theo một giải pháp nghiệp vụ.
 /// Dùng cho danh sách mô-đun hệ thống (RptSv_Sys_Modules_Get).
 /// </summary>
