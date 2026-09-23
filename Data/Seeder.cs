@@ -233,6 +233,26 @@ public static class Seeder
                 new MstPaymentMethod { PaymentMethodCode = "QT", NetworkID = "NET-DEMO", PaymentMethodName = "Quẹt thẻ", Remark = "Thanh toán bằng thẻ ngân hàng", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Giải pháp hệ thống (Sys_Solution) + mô-đun (Sys_Modules) cho danh sách mô-đun hệ thống.
+        if (!await db.SysSolutions.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.SysSolutions.AddRange(
+                new SysSolution { SolutionCode = "SOL_HDDT", SolutionName = "Hóa đơn điện tử", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysSolution { SolutionCode = "SOL_QLDL", SolutionName = "Quản lý đại lý", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysSolution { SolutionCode = "SOL_KT", SolutionName = "Kế toán tổng hợp", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.SysModules.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.SysModules.AddRange(
+                new SysModule { ModuleCode = "MOD_INVOICE", NetworkID = "NET-DEMO", SolutionCode = "SOL_HDDT", ModuleName = "Quản lý hóa đơn", Description = "Phát hành & quản lý hóa đơn điện tử", QtyInvoice = 100000, ValCapacity = 50m, LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysModule { ModuleCode = "MOD_REPORT", NetworkID = "NET-DEMO", SolutionCode = "SOL_HDDT", ModuleName = "Báo cáo tổng hợp", Description = "Báo cáo tình hình sử dụng hóa đơn", QtyInvoice = 0, ValCapacity = 10m, LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new SysModule { ModuleCode = "MOD_DEALER", NetworkID = "NET-DEMO", SolutionCode = "SOL_QLDL", ModuleName = "Quản lý đại lý", Description = "Danh mục & chiết khấu đại lý", QtyInvoice = 0, ValCapacity = 20m, LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new SysModule { ModuleCode = "MOD_ACCOUNT", NetworkID = "NET-DEMO", SolutionCode = "SOL_KT", ModuleName = "Kế toán tổng hợp", Description = "Hạch toán & đối soát", QtyInvoice = 0, ValCapacity = 5m, FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

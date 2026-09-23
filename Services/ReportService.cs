@@ -226,6 +226,20 @@ public record PaymentMethodListResult(
     List<PaymentMethodRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách mô-đun hệ thống (Sys_Modules) — kèm thông tin giải pháp (Sys_Solution).
+/// </summary>
+public record SysModuleRow(
+    int Idx, string ModuleCode, string NetworkID, string SolutionCode,
+    string SolutionName, string ModuleName, string Description,
+    long QtyInvoice, decimal ValCapacity, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách mô-đun hệ thống: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record SysModuleListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<SysModuleRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách người nộp thuế (Mst_NNT) — kèm thông tin cơ quan thuế (Mst_GovTaxID),
 /// tỉnh (Mst_Province), huyện (Mst_District) và đơn hàng license (MstSv_Inos_Org).
 /// </summary>
@@ -307,6 +321,9 @@ public interface IReportService
 
     Task<PaymentMethodListResult> PaymentMethodListAsync(int recordStart = 0, int recordCount = 50,
         string? paymentMethodCode = null, string? networkId = null, bool? flagActive = null);
+
+    Task<SysModuleListResult> SysModuleListAsync(int recordStart = 0, int recordCount = 50,
+        string? moduleCode = null, string? solutionCode = null, string? networkId = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1151,5 +1168,49 @@ public class ReportService(AppDbContext db) : IReportService
             p.LogLUDTimeUTC, p.LogLUBy)).ToList();
 
         return new PaymentMethodListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách mô-đun hệ thống (RptSv_Sys_Modules_Get) — endpoint tổng hợp: trả về danh mục
+    /// mô-đun (mã/tên/mô tả/hạn mức số hóa đơn/dung lượng/trạng thái) kèm thông tin giải pháp
+    /// (Sys_Solution), có phân trang + lọc theo mã mô-đun / mã giải pháp / mạng-đại lý / trạng thái.
+    /// Port từ RptSv_Sys_Modules_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Sys_Modules_Filter_Draft/#tbl_Sys_Modules_Filter và khối select
+    /// Sys_Modules left join Sys_Solution thành truy vấn LINQ.
+    /// </summary>
+    public async Task<SysModuleListResult> SysModuleListAsync(int recordStart = 0, int recordCount = 50,
+        string? moduleCode = null, string? solutionCode = null, string? networkId = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc mô-đun theo mã / giải pháp / mạng-đại lý / trạng thái (tương ứng #tbl_Sys_Modules_Filter_Draft).
+        var items = await db.SysModules
+            .Where(m => string.IsNullOrEmpty(moduleCode) || m.ModuleCode == moduleCode)
+            .Where(m => string.IsNullOrEmpty(solutionCode) || m.SolutionCode == solutionCode)
+            .Where(m => string.IsNullOrEmpty(networkId) || m.NetworkID == networkId)
+            .Where(m => flagActive == null || m.FlagActive == flagActive)
+            .OrderBy(m => m.ModuleCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Sys_Modules_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        // B3: gắn thông tin giải pháp (tương ứng left join Sys_Solution).
+        var solutions = await db.SysSolutions.ToListAsync();
+        var solutionByCode = solutions.ToDictionary(s => s.SolutionCode, s => s);
+
+        var rows = page.Select((m, i) =>
+        {
+            solutionByCode.TryGetValue(m.SolutionCode, out var s);
+            return new SysModuleRow(
+                recordStart + i + 1, m.ModuleCode, m.NetworkID, m.SolutionCode,
+                s?.SolutionName ?? "", m.ModuleName, m.Description,
+                m.QtyInvoice, m.ValCapacity, m.FlagActive,
+                m.LogLUDTimeUTC, m.LogLUBy);
+        }).ToList();
+
+        return new SysModuleListResult(recordStart, recordCount, total, rows);
     }
 }

@@ -33,6 +33,8 @@ public class AppDbContext : DbContext
     public DbSet<MstVatRate> MstVatRates => Set<MstVatRate>();
     public DbSet<MstDealer> MstDealers => Set<MstDealer>();
     public DbSet<MstPaymentMethod> MstPaymentMethods => Set<MstPaymentMethod>();
+    public DbSet<SysSolution> SysSolutions => Set<SysSolution>();
+    public DbSet<SysModule> SysModules => Set<SysModule>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -62,6 +64,8 @@ public class AppDbContext : DbContext
         b.Entity<MstVatRate>(e => { e.HasIndex(x => new { x.OrgId, x.VATRateCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstDealer>(e => { e.HasIndex(x => new { x.OrgId, x.DLCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstPaymentMethod>(e => { e.HasIndex(x => new { x.OrgId, x.PaymentMethodCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<SysSolution>(e => { e.HasIndex(x => new { x.OrgId, x.SolutionCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<SysModule>(e => { e.HasIndex(x => new { x.OrgId, x.ModuleCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

@@ -405,3 +405,39 @@ public class MstPaymentMethod : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }           // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";            // người cập nhật cuối
 }
+
+/// <summary>
+/// Giải pháp hệ thống (Sys_Solution) — nhóm các mô-đun theo một giải pháp nghiệp vụ.
+/// Dùng cho danh sách mô-đun hệ thống (RptSv_Sys_Modules_Get).
+/// </summary>
+public class SysSolution : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string SolutionCode { get; set; } = "";    // mã giải pháp
+    public string SolutionName { get; set; } = "";    // tên giải pháp
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}
+
+/// <summary>
+/// Mô-đun hệ thống (Sys_Modules) — đơn vị chức năng thuộc một giải pháp (Sys_Solution),
+/// kèm hạn mức số hóa đơn (QtyInvoice) và dung lượng (ValCapacity).
+/// Dùng cho danh sách mô-đun hệ thống (RptSv_Sys_Modules_Get).
+/// </summary>
+public class SysModule : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string ModuleCode { get; set; } = "";      // mã mô-đun
+    public string NetworkID { get; set; } = "";       // mạng/đại lý
+    public string SolutionCode { get; set; } = "";    // mã giải pháp (join Sys_Solution)
+    public string ModuleName { get; set; } = "";      // tên mô-đun
+    public string Description { get; set; } = "";     // mô tả
+    public long QtyInvoice { get; set; }               // hạn mức số hóa đơn
+    public decimal ValCapacity { get; set; }           // dung lượng (ValCapacity)
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}
