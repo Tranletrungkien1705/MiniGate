@@ -1,0 +1,82 @@
+@model SysGroupListResult
+@{ ViewData["Title"] = "Danh sách nhóm quyền"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-diagram-3 me-1"></i>Danh sách nhóm quyền (RptSv_Sys_Group_Get)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Mã nhóm</label><input name="groupCode" value="@ViewBag.GroupCode" class="form-control form-control-sm" placeholder="VD: GRP_KT" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Mã user (thành viên)</label><input name="userCode" value="@ViewBag.UserCode" class="form-control form-control-sm" placeholder="VD: nnt_a" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Trạng thái</label>
+            <select name="flagActive" class="form-select form-select-sm">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.FlagActive as string))">Tất cả</option>
+                <option value="1" selected="@(ViewBag.FlagActive == "1")">Đang hoạt động</option>
+                <option value="0" selected="@(ViewBag.FlagActive == "0")">Ngừng hoạt động</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Bắt đầu (RecordStart)</label><input type="number" name="recordStart" value="@ViewBag.RecordStart" class="form-control form-control-sm" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Số dòng (RecordCount)</label><input type="number" name="recordCount" value="@ViewBag.RecordCount" class="form-control form-control-sm" /></div>
+        <div class="col-12 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search me-1"></i>Tổng hợp</button></div>
+    </form>
+</div></div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tổng số nhóm khớp lọc</div><div class="stat-num">@Model.TotalCount.ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Đang hiển thị</div><div class="stat-num" style="color:#059669">@Model.Rows.Count</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Trang (RecordStart)</div><div class="stat-num" style="color:#047857">@Model.RecordStart</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Kích thước trang</div><div class="stat-num">@Model.RecordCount</div></div></div></div>
+</div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Nhóm quyền</h6>
+        <span class="text-muted small">@Model.Rows.Count / @Model.TotalCount bản ghi</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Mã nhóm</th>
+                <th>Tên nhóm</th>
+                <th>MST</th>
+                <th class="text-center">Trạng thái</th>
+                <th class="text-center">Số thành viên</th>
+                <th>Thành viên</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.GroupCode</td>
+                <td>@r.GroupName</td>
+                <td class="small" style="font-family:monospace">@(string.IsNullOrEmpty(r.MST) ? "—" : r.MST)</td>
+                <td class="text-center">
+                    @if (r.FlagActive) { <span class="badge" style="background:#059669">Hoạt động</span> }
+                    else { <span class="badge bg-secondary">Ngừng</span> }
+                </td>
+                <td class="text-center fw-semibold">@r.Members.Count</td>
+                <td>
+                    @if (r.Members.Count == 0) { <span class="text-muted small">—</span> }
+                    else
+                    {
+                        @foreach (var m in r.Members)
+                        {
+                            <span class="badge bg-light text-dark me-1 mb-1" title="@m.UserName">
+                                @m.UserCode
+                                @if (m.FlagSysAdmin) { <i class="bi bi-shield-fill-check ms-1" style="color:#059669"></i> }
+                                @if (!m.FlagActive) { <i class="bi bi-slash-circle ms-1 text-muted"></i> }
+                            </span>
+                        }
+                    }
+                </td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="7" class="text-center text-muted py-4">Không có nhóm nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh sách nhóm (phân trang theo RecordStart/RecordCount) kèm danh sách thành viên đã tham gia (RptSv_Sys_UserInGroup join RptSv_Sys_User).
+    </p>
+</div></div>

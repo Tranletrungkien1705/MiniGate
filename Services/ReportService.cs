@@ -84,6 +84,22 @@ public record SysUserListResult(
     int RecordStart, int RecordCount, long TotalCount,
     List<SysUserRow> Rows);
 
+/// <summary>
+/// Một dòng của danh sách nhóm quyền (RptSv_Sys_Group) — kèm danh sách thành viên đã tham gia.
+/// </summary>
+public record SysGroupRow(
+    int Idx, string GroupCode, string GroupName, string MST, bool FlagActive,
+    List<SysGroupMemberRow> Members);
+
+/// <summary>Một thành viên trong nhóm (RptSv_Sys_UserInGroup join RptSv_Sys_User).</summary>
+public record SysGroupMemberRow(
+    string UserCode, string UserName, string BankCode, bool FlagSysAdmin, bool FlagActive);
+
+/// <summary>Kết quả danh sách nhóm quyền: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record SysGroupListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<SysGroupRow> Rows);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
@@ -100,6 +116,9 @@ public interface IReportService
 
     Task<SysUserListResult> SysUserListAsync(int recordStart = 0, int recordCount = 50,
         string? userCode = null, string? groupCode = null, bool? flagActive = null);
+
+    Task<SysGroupListResult> SysGroupListAsync(int recordStart = 0, int recordCount = 50,
+        string? groupCode = null, string? userCode = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -468,5 +487,58 @@ public class ReportService(AppDbContext db) : IReportService
             groupsByUser.GetValueOrDefault(u.UserCode, new List<string>()))).ToList();
 
         return new SysUserListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách nhóm quyền (RptSv_Sys_Group_Get) — endpoint tổng hợp: trả về danh sách nhóm
+    /// (có phân trang + lọc theo mã nhóm / mã user / trạng thái) kèm danh sách thành viên đã tham gia.
+    /// Port từ RptSv_Sys_Group_Get (MobileGate) — gộp các bảng tạm #tbl_RptSv_Sys_Group_Filter_Draft/#tbl_RptSv_Sys_Group_Filter
+    /// và hai khối select RptSv_Sys_Group / RptSv_Sys_UserInGroup thành truy vấn LINQ.
+    /// </summary>
+    public async Task<SysGroupListResult> SysGroupListAsync(int recordStart = 0, int recordCount = 50,
+        string? groupCode = null, string? userCode = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc nhóm theo mã / trạng thái (tương ứng #tbl_RptSv_Sys_Group_Filter_Draft).
+        var groups = await db.SysGroups
+            .Where(g => string.IsNullOrEmpty(groupCode) || g.GroupCode == groupCode)
+            .Where(g => flagActive == null || g.FlagActive == flagActive)
+            .OrderBy(g => g.GroupCode)
+            .ToListAsync();
+
+        // B2: lọc theo thành viên (join RptSv_Sys_UserInGroup) nếu có.
+        var memberships = await db.SysUserInGroups.ToListAsync();
+        if (!string.IsNullOrEmpty(userCode))
+        {
+            var groupsOfUser = memberships.Where(m => m.UserCode == userCode).Select(m => m.GroupCode).ToHashSet();
+            groups = groups.Where(g => groupsOfUser.Contains(g.GroupCode)).ToList();
+        }
+
+        // B3: phân trang (tương ứng #tbl_RptSv_Sys_Group_Filter với MyIdxSeq).
+        var total = groups.Count;
+        var page = groups.Skip(recordStart).Take(recordCount).ToList();
+
+        // B4: gắn danh sách thành viên của từng nhóm (tương ứng khối select RptSv_Sys_UserInGroup join RptSv_Sys_User).
+        var users = await db.SysUsers.ToListAsync();
+        var userByCode = users.ToDictionary(u => u.UserCode, u => u);
+        var membersByGroup = memberships
+            .GroupBy(m => m.GroupCode)
+            .ToDictionary(g => g.Key, g => g.Select(m => m.UserCode).OrderBy(c => c).ToList());
+
+        var rows = page.Select((g, i) =>
+        {
+            var members = membersByGroup.GetValueOrDefault(g.GroupCode, new List<string>())
+                .Select(uc =>
+                {
+                    var u = userByCode.GetValueOrDefault(uc);
+                    return new SysGroupMemberRow(uc, u?.UserName ?? "", u?.BankCode ?? "",
+                        u?.FlagSysAdmin ?? false, u?.FlagActive ?? false);
+                }).ToList();
+            return new SysGroupRow(recordStart + i + 1, g.GroupCode, g.GroupName, g.MST, g.FlagActive, members);
+        }).ToList();
+
+        return new SysGroupListResult(recordStart, recordCount, total, rows);
     }
 }
