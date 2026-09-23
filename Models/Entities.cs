@@ -182,7 +182,7 @@ public class MstProvince : IOrgOwned
 
 /// <summary>
 /// Quận/huyện (Mst_District) — danh mục huyện dùng cho địa chỉ NNT.
-/// Dùng cho danh sách người nộp thuế (RptSv_Mst_NNT_Get).
+/// Dùng cho danh sách người nộp thuế (RptSv_Mst_NNT_Get) và danh sách quận/huyện (RptSv_Mst_District_Get).
 /// </summary>
 public class MstDistrict : IOrgOwned
 {
@@ -192,6 +192,8 @@ public class MstDistrict : IOrgOwned
     public string DistrictCode { get; set; } = "";    // mã huyện
     public string DistrictName { get; set; } = "";    // tên huyện
     public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
 
 /// <summary>

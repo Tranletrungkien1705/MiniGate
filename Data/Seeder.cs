@@ -106,10 +106,14 @@ public static class Seeder
         }
         if (!await db.MstDistricts.AnyAsync())
         {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
             db.MstDistricts.AddRange(
-                new MstDistrict { ProvinceCode = "01", DistrictCode = "001", DistrictName = "Quận Ba Đình" },
-                new MstDistrict { ProvinceCode = "79", DistrictCode = "760", DistrictName = "Quận 1" },
-                new MstDistrict { ProvinceCode = "48", DistrictCode = "490", DistrictName = "Quận Hải Châu" });
+                new MstDistrict { ProvinceCode = "01", DistrictCode = "001", DistrictName = "Quận Ba Đình", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstDistrict { ProvinceCode = "01", DistrictCode = "002", DistrictName = "Quận Hoàn Kiếm", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstDistrict { ProvinceCode = "79", DistrictCode = "760", DistrictName = "Quận 1", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstDistrict { ProvinceCode = "79", DistrictCode = "761", DistrictName = "Quận 3", LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstDistrict { ProvinceCode = "48", DistrictCode = "490", DistrictName = "Quận Hải Châu", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" },
+                new MstDistrict { ProvinceCode = "99", DistrictCode = "999", DistrictName = "Huyện cũ (ngừng)", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
         if (!await db.SysUsers.AnyAsync())

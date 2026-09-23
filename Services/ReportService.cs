@@ -220,6 +220,19 @@ public record ProvinceListResult(
     List<ProvinceRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách quận/huyện (Mst_District) —
+/// mã tỉnh, mã/tên huyện, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record DistrictRow(
+    int Idx, string ProvinceCode, string DistrictCode, string DistrictName, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách quận/huyện: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record DistrictListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<DistrictRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách đại lý (Mst_Dealer) — kèm tên tỉnh (Mst_Province)
 /// và số khách hàng/NNT gắn với đại lý (count_MST = SLKH).
 /// </summary>
@@ -437,6 +450,9 @@ public interface IReportService
         string? govIdType = null, string? networkId = null, bool? flagActive = null);
     Task<ProvinceListResult> ProvinceListAsync(int recordStart = 0, int recordCount = 50,
         string? provinceCode = null, string? provinceName = null, bool? flagActive = null);
+
+    Task<DistrictListResult> DistrictListAsync(int recordStart = 0, int recordCount = 50,
+        string? provinceCode = null, string? districtCode = null, string? districtName = null, bool? flagActive = null);
 
     Task<SysObjectInModuleListResult> SysObjectInModuleListAsync(int recordStart = 0, int recordCount = 50,
         string? objectCode = null, string? moduleCode = null);
@@ -1202,6 +1218,36 @@ public class ReportService(AppDbContext db) : IReportService
                 recordStart + i + 1, p.ProvinceCode, p.ProvinceName, p.FlagActive,
                 p.LogLUDTimeUTC, p.LogLUBy)).ToList();
             return new ProvinceListResult(recordStart, recordCount, total, rows);
+        }
+
+        /// <summary>
+        /// Danh sách quận/huyện (RptSv_Mst_District_Get) — endpoint tổng hợp: trả về danh mục
+        /// quận/huyện (mã tỉnh/mã huyện/tên huyện/trạng thái), có phân trang
+        /// + lọc theo mã tỉnh / mã huyện / tên huyện / trạng thái.
+        /// Port từ RptSv_Mst_District_Get (MobileGate) — gộp các bảng tạm
+        /// #tbl_Mst_District_Filter_Draft/#tbl_Mst_District_Filter và khối select
+        /// Mst_District thành truy vấn LINQ.
+        /// </summary>
+        public async Task<DistrictListResult> DistrictListAsync(int recordStart = 0, int recordCount = 50,
+            string? provinceCode = null, string? districtCode = null, string? districtName = null, bool? flagActive = null)
+        {
+            if (recordStart < 0) recordStart = 0;
+            if (recordCount <= 0) recordCount = 50;
+            // B1: lọc quận/huyện theo mã tỉnh / mã huyện / tên huyện / trạng thái (tương ứng #tbl_Mst_District_Filter_Draft).
+            var items = await db.MstDistricts
+                .Where(d => string.IsNullOrEmpty(provinceCode) || d.ProvinceCode == provinceCode)
+                .Where(d => string.IsNullOrEmpty(districtCode) || d.DistrictCode == districtCode)
+                .Where(d => string.IsNullOrEmpty(districtName) || d.DistrictName.Contains(districtName))
+                .Where(d => flagActive == null || d.FlagActive == flagActive)
+                .OrderBy(d => d.ProvinceCode).ThenBy(d => d.DistrictCode)
+                .ToListAsync();
+            // B2: phân trang (tương ứng #tbl_Mst_District_Filter với MyIdxSeq).
+            var total = items.Count;
+            var page = items.Skip(recordStart).Take(recordCount).ToList();
+            var rows = page.Select((d, i) => new DistrictRow(
+                recordStart + i + 1, d.ProvinceCode, d.DistrictCode, d.DistrictName, d.FlagActive,
+                d.LogLUDTimeUTC, d.LogLUBy)).ToList();
+            return new DistrictListResult(recordStart, recordCount, total, rows);
         }
 
     /// <summary>
