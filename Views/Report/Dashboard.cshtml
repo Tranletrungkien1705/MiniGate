@@ -1,0 +1,90 @@
+@model InvoiceDashboardResult
+@{ ViewData["Title"] = "Bảng điều khiển hóa đơn"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-speedometer2 me-1"></i>Bảng điều khiển hóa đơn (Rpt_InvoiceForDashboard)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Từ ngày</label><input type="date" name="from" value="@ViewBag.From" class="form-control form-control-sm" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Đến ngày</label><input type="date" name="to" value="@ViewBag.To" class="form-control form-control-sm" /></div>
+        <div class="col-12 col-md-2"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search me-1"></i>Tổng hợp</button></div>
+    </form>
+</div></div>
+
+@{
+    var typeLabels = new Dictionary<string, string>
+    {
+        ["InvoiceCreateDate"] = "Tạo trong ngày",
+        ["InvoicePending"] = "Chờ phát hành",
+        ["InvoiceDate"] = "Lập trong ngày",
+        ["InvoiceMonth"] = "Lập trong tháng",
+        ["InvoiceQuarter"] = "Lập trong quý",
+        ["InvoiceYear"] = "Lập trong năm",
+    };
+    var byType = Model.Rows.GroupBy(r => r.ReportType).ToList();
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Số dòng tổng hợp</div><div class="stat-num">@Model.Rows.Count</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">MST có hạn mức</div><div class="stat-num" style="color:#059669">@Model.Licenses.Count</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tổng đã phát hành</div><div class="stat-num">@Model.Licenses.Sum(l => l.TotalQtyIssued).ToString("N0")</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="text-muted small">Tổng còn lại</div><div class="stat-num" style="color:#047857">@Model.Licenses.Sum(l => l.QtyRemain).ToString("N0")</div></div></div></div>
+</div>
+
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3">Tổng hợp theo loại kỳ</h6>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead><tr>
+            <th>Loại kỳ</th><th>MST</th>
+            <th class="text-end">Số hóa đơn</th><th class="text-end">Doanh số sau VAT</th>
+            <th class="text-end">Hạn mức</th><th class="text-end">Đã PH</th><th class="text-end">Đã dùng</th><th class="text-end">Đã hủy</th><th class="text-end">Còn lại</th>
+        </tr></thead>
+        <tbody>
+        @foreach (var g in byType)
+        {
+            foreach (var r in g)
+            {
+                <tr>
+                    <td><span class="badge bg-light text-dark">@(typeLabels.TryGetValue(r.ReportType, out var lb) ? lb : r.ReportType)</span></td>
+                    <td class="small" style="font-family:monospace">@r.MST</td>
+                    <td class="text-end fw-semibold">@r.TotalQtyInvoice.ToString("N0")</td>
+                    <td class="text-end">@r.TotalAmountAfterVAT.ToString("N0")</td>
+                    <td class="text-end small">@r.TotalQty.ToString("N0")</td>
+                    <td class="text-end small">@r.TotalQtyIssued.ToString("N0")</td>
+                    <td class="text-end small" style="color:#059669">@r.TotalQtyUsed.ToString("N0")</td>
+                    <td class="text-end small" style="color:#dc2626">@r.TotalQtyCancel.ToString("N0")</td>
+                    <td class="text-end small">@r.QtyRemain.ToString("N0")</td>
+                </tr>
+            }
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="9" class="text-center text-muted py-4">Không có hóa đơn nào trong kỳ.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <h6 class="fw-bold mb-3">Hạn mức phát hành theo MST</h6>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead><tr>
+            <th>MST</th><th>Mạng/Đại lý</th>
+            <th class="text-end">Hạn mức</th><th class="text-end">Đã PH</th><th class="text-end">Đã dùng</th><th class="text-end">Đã hủy</th><th class="text-end">Còn lại</th>
+        </tr></thead>
+        <tbody>
+        @foreach (var l in Model.Licenses)
+        {
+            <tr>
+                <td class="small" style="font-family:monospace">@l.MST</td>
+                <td class="small text-muted">@l.NetworkId</td>
+                <td class="text-end">@l.TotalQty.ToString("N0")</td>
+                <td class="text-end">@l.TotalQtyIssued.ToString("N0")</td>
+                <td class="text-end" style="color:#059669">@l.TotalQtyUsed.ToString("N0")</td>
+                <td class="text-end" style="color:#dc2626">@l.TotalQtyCancel.ToString("N0")</td>
+                <td class="text-end fw-semibold">@l.QtyRemain.ToString("N0")</td>
+            </tr>
+        }
+        @if (Model.Licenses.Count == 0) { <tr><td colspan="7" class="text-center text-muted py-4">Chưa có hạn mức nào.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+</div></div>

@@ -44,12 +44,18 @@ public static class Seeder
 
             var invs = new List<Invoice>();
             for (long n = 1; n <= 120; n++)
-                invs.Add(new Invoice { TInvoiceCode = t1.TInvoiceCode, InvoiceNo = n, InvoiceDate = monthStart.AddDays(2), InvoiceStatus = "ISSUED" });
+                invs.Add(new Invoice { TInvoiceCode = t1.TInvoiceCode, InvoiceNo = n, InvoiceDate = monthStart.AddDays(2), InvoiceStatus = "ISSUED", MST = t1.MST, AmountAfterVAT = 1_100_000m, CreatedAt = monthStart.AddDays(2) });
             for (long n = 121; n <= 125; n++)
-                invs.Add(new Invoice { TInvoiceCode = t1.TInvoiceCode, InvoiceNo = n, InvoiceDate = monthStart.AddDays(3), InvoiceStatus = "DELETED" });
+                invs.Add(new Invoice { TInvoiceCode = t1.TInvoiceCode, InvoiceNo = n, InvoiceDate = monthStart.AddDays(3), InvoiceStatus = "DELETED", MST = t1.MST, AmountAfterVAT = 550_000m, CreatedAt = monthStart.AddDays(3) });
             for (long n = 1; n <= 40; n++)
-                invs.Add(new Invoice { TInvoiceCode = t2.TInvoiceCode, InvoiceNo = n, InvoiceDate = monthStart.AddDays(4), InvoiceStatus = "ISSUED" });
+                invs.Add(new Invoice { TInvoiceCode = t2.TInvoiceCode, InvoiceNo = n, InvoiceDate = monthStart.AddDays(4), InvoiceStatus = "ISSUED", MST = t2.MST, AmountAfterVAT = 2_200_000m, CreatedAt = monthStart.AddDays(4) });
             db.Invoices.AddRange(invs);
+            await db.SaveChangesAsync();
+        }
+        // Hạn mức phát hành theo MST (Invoice_license) cho bảng điều khiển hóa đơn.
+        if (!await db.InvoiceLicenses.AnyAsync())
+        {
+            db.InvoiceLicenses.Add(new InvoiceLicense { MST = "0101234567", NetworkId = "NET-DEMO", TotalQty = 1000, TotalQtyIssued = 700, TotalQtyUsed = 160, TotalQtyCancel = 5 });
             await db.SaveChangesAsync();
         }
     }

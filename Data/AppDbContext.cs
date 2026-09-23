@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<RequestLog> Logs => Set<RequestLog>();
     public DbSet<InvoiceTemplate> InvoiceTemplates => Set<InvoiceTemplate>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceLicense> InvoiceLicenses => Set<InvoiceLicense>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -24,6 +25,7 @@ public class AppDbContext : DbContext
         b.Entity<RequestLog>(e => { e.HasIndex(x => x.At); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<InvoiceTemplate>(e => { e.HasIndex(x => new { x.OrgId, x.TInvoiceCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<Invoice>(e => { e.HasIndex(x => new { x.OrgId, x.TInvoiceCode, x.InvoiceNo }); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<InvoiceLicense>(e => { e.HasIndex(x => new { x.OrgId, x.MST }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

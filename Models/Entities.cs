@@ -75,5 +75,22 @@ public class Invoice : IOrgOwned
     public string TInvoiceCode { get; set; } = "";    // trỏ tới mẫu
     public long? InvoiceNo { get; set; }              // số hóa đơn
     public DateTime InvoiceDate { get; set; }         // ngày lập
-    public string InvoiceStatus { get; set; } = "";   // ISSUED / DELETED / CANCELED
+    public string InvoiceStatus { get; set; } = "";   // ISSUED / DELETED / CANCELED / PENDING
+    public string MST { get; set; } = "";             // MST người nộp thuế
+    public decimal AmountAfterVAT { get; set; }       // tổng tiền sau VAT (Σ UnitPrice*Qty*(1+VAT))
+    public DateTime CreatedAt { get; set; } = DateTime.Now; // thời điểm tạo (CreateDTimeUTC)
+}
+
+/// <summary>Hạn mức phát hành hóa đơn theo MST (Invoice_license) — dùng cho bảng điều khiển.</summary>
+public class InvoiceLicense : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string MST { get; set; } = "";             // MST người nộp thuế
+    public string NetworkId { get; set; } = "";       // mạng/đại lý
+    public long TotalQty { get; set; }                // tổng số được cấp
+    public long TotalQtyIssued { get; set; }          // đã phát hành
+    public long TotalQtyUsed { get; set; }            // đã sử dụng
+    public long TotalQtyCancel { get; set; }          // đã hủy
+    public bool FlagActive { get; set; } = true;
 }
