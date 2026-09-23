@@ -338,6 +338,24 @@ public record InosUserListResult(
     List<InosUserRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách thông báo (Notify_Notify) — kèm danh sách người nhận (Notify_NotifyDtl).
+/// </summary>
+public record NotifyRow(
+    int Idx, string NotifyNo, string NotifyType, string NotifyType1, string NotifyDesc,
+    DateTime? EffDateStart, DateTime? EffDateEnd, bool FlagSendEmail, bool FlagActive,
+    DateTime CreateDTimeUTC, string CreateBy, DateTime LogLUDTimeUTC, string LogLUBy,
+    List<NotifyDtlRow> Details);
+
+/// <summary>Một người nhận thông báo (Notify_NotifyDtl) — mã user + cờ đã đọc.</summary>
+public record NotifyDtlRow(
+    string UserCode, bool FlagRead, bool FlagActive);
+
+/// <summary>Kết quả danh sách thông báo: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record NotifyListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<NotifyRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách giải pháp hệ thống (Sys_Solution) —
 /// mã/tên giải pháp, mạng-đại lý, trạng thái và thông tin cập nhật cuối.
 /// </summary>
@@ -510,6 +528,9 @@ public interface IReportService
 
     Task<InosUserListResult> InosUserListAsync(int recordStart = 0, int recordCount = 50,
         string? mst = null, string? email = null, string? name = null, bool? flagActive = null);
+
+    Task<NotifyListResult> NotifyListAsync(int recordStart = 0, int recordCount = 50,
+        string? notifyNo = null, string? notifyType = null, string? userCode = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1788,5 +1809,54 @@ public class ReportService(AppDbContext db) : IReportService
             u.FlagActive, u.LogLUDTimeUTC, u.LogLUBy)).ToList();
 
         return new InosUserListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách thông báo (Notify_Notify_Get) — endpoint tổng hợp: trả về danh sách thông báo
+    /// (Notify_Notify) có phân trang + lọc theo mã thông báo / loại / người nhận / trạng thái,
+    /// kèm danh sách người nhận (Notify_NotifyDtl) của từng thông báo.
+    /// Port từ Notify_Notify_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Notify_Notify_Filter_Draft/#tbl_Notify_Notify_Filter và hai khối select
+    /// Notify_Notify / Notify_NotifyDtl thành truy vấn LINQ.
+    /// </summary>
+    public async Task<NotifyListResult> NotifyListAsync(int recordStart = 0, int recordCount = 50,
+        string? notifyNo = null, string? notifyType = null, string? userCode = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc thông báo theo mã / loại / trạng thái (tương ứng #tbl_Notify_Notify_Filter_Draft).
+        var items = await db.NotifyNotifies
+            .Where(n => string.IsNullOrEmpty(notifyNo) || n.NotifyNo == notifyNo)
+            .Where(n => string.IsNullOrEmpty(notifyType) || n.NotifyType == notifyType)
+            .Where(n => flagActive == null || n.FlagActive == flagActive)
+            .OrderBy(n => n.NotifyNo)
+            .ToListAsync();
+
+        // B2: lọc theo người nhận (join Notify_NotifyDtl) nếu có.
+        var details = await db.NotifyNotifyDtls.ToListAsync();
+        if (!string.IsNullOrEmpty(userCode))
+        {
+            var notifyNosOfUser = details.Where(d => d.UserCode == userCode).Select(d => d.NotifyNo).ToHashSet();
+            items = items.Where(n => notifyNosOfUser.Contains(n.NotifyNo)).ToList();
+        }
+
+        // B3: phân trang (tương ứng #tbl_Notify_Notify_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        // B4: gắn danh sách người nhận của từng thông báo (tương ứng khối select Notify_NotifyDtl).
+        var detailsByNotify = details
+            .GroupBy(d => d.NotifyNo)
+            .ToDictionary(g => g.Key, g => g.OrderBy(d => d.UserCode)
+                .Select(d => new NotifyDtlRow(d.UserCode, d.FlagRead, d.FlagActive)).ToList());
+
+        var rows = page.Select((n, i) => new NotifyRow(
+            recordStart + i + 1, n.NotifyNo, n.NotifyType, n.NotifyType1, n.NotifyDesc,
+            n.EffDateStart, n.EffDateEnd, n.FlagSendEmail, n.FlagActive,
+            n.CreateDTimeUTC, n.CreateBy, n.LogLUDTimeUTC, n.LogLUBy,
+            detailsByNotify.GetValueOrDefault(n.NotifyNo, new List<NotifyDtlRow>()))).ToList();
+
+        return new NotifyListResult(recordStart, recordCount, total, rows);
     }
 }

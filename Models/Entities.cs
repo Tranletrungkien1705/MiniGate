@@ -637,3 +637,43 @@ public class MstSvInosUser : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
+/// <summary>
+/// Thông báo (Notify_Notify) — bản tin/thông báo gửi tới người dùng hệ thống,
+/// kèm loại thông báo (NotifyType/NotifyType1), khoảng hiệu lực và cờ gửi email.
+/// Dùng cho danh sách thông báo (Notify_Notify_Get).
+/// </summary>
+public class NotifyNotify : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string NotifyNo { get; set; } = "";        // mã thông báo
+    public string NotifyType { get; set; } = "";      // loại thông báo (NotifyType)
+    public string NotifyType1 { get; set; } = "";     // loại thông báo phụ (NotifyType1)
+    public string NotifyDesc { get; set; } = "";      // nội dung thông báo
+    public DateTime? EffDateStart { get; set; }        // ngày hiệu lực bắt đầu
+    public DateTime? EffDateEnd { get; set; }          // ngày hiệu lực kết thúc
+    public bool FlagSendEmail { get; set; }            // có gửi email kèm không
+    public bool FlagActive { get; set; } = true;
+    public DateTime CreateDTimeUTC { get; set; }        // thời điểm tạo
+    public string CreateBy { get; set; } = "";         // người tạo
+    public DateTime LogLUDTimeUTC { get; set; }         // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";          // người cập nhật cuối
+}
+
+/// <summary>
+/// Chi tiết thông báo theo người dùng (Notify_NotifyDtl) — liên kết thông báo (NotifyNo) ↔ user (UserCode),
+/// kèm cờ đã đọc (FlagRead). Dùng cho danh sách thông báo (Notify_Notify_Get).
+/// </summary>
+public class NotifyNotifyDtl : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string NotifyNo { get; set; } = "";        // mã thông báo (join Notify_Notify)
+    public string UserCode { get; set; } = "";        // mã người dùng nhận thông báo
+    public bool FlagRead { get; set; }                 // đã đọc chưa
+    public bool FlagActive { get; set; } = true;
+    public DateTime CreateDTimeUTC { get; set; }        // thời điểm tạo
+    public string CreateBy { get; set; } = "";         // người tạo
+    public DateTime LogLUDTimeUTC { get; set; }         // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";          // người cập nhật cuối
+}

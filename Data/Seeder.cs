@@ -361,6 +361,27 @@ public static class Seeder
                 new MstSvInosUser { MST = "0109999999", Email = "c@demo.vn", Name = "Phạm Thị D (ngừng)", Password = "***", Language = "vi", TimeZone = "SE Asia Standard Time", UUID = "44444444-4444-4444-4444-444444444444", InosUserId = 9004, FlagEmailActivate = false, FlagAdmin = false, FlagEmailSend = false, FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Thông báo (Notify_Notify) + chi tiết theo người dùng (Notify_NotifyDtl) cho danh sách thông báo.
+        if (!await db.NotifyNotifies.AnyAsync())
+        {
+            var day = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.NotifyNotifies.AddRange(
+                new NotifyNotify { NotifyNo = "NTV.001", NotifyType = "ALLUser", NotifyType1 = "Maintenance", NotifyDesc = "Bảo trì hệ thống định kỳ vào 22h ngày 15 hàng tháng.", EffDateStart = day, EffDateEnd = day.AddMonths(1), FlagSendEmail = true, CreateDTimeUTC = day, CreateBy = "admin", LogLUDTimeUTC = day, LogLUBy = "admin" },
+                new NotifyNotify { NotifyNo = "NTV.002", NotifyType = "ALLUser", NotifyType1 = "Maintenance", NotifyDesc = "Nâng cấp phiên bản hóa đơn điện tử mới.", EffDateStart = day, EffDateEnd = day.AddMonths(2), FlagSendEmail = false, CreateDTimeUTC = day, CreateBy = "admin", LogLUDTimeUTC = day, LogLUBy = "admin" },
+                new NotifyNotify { NotifyNo = "NTV.003", NotifyType = "ALLUser", NotifyType1 = "Maintenance", NotifyDesc = "Thông báo cũ đã hết hiệu lực.", EffDateStart = day.AddMonths(-2), EffDateEnd = day.AddMonths(-1), FlagSendEmail = false, FlagActive = false, CreateDTimeUTC = day.AddMonths(-2), CreateBy = "nnt_b", LogLUDTimeUTC = day, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.NotifyNotifyDtls.AnyAsync())
+        {
+            var day = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.NotifyNotifyDtls.AddRange(
+                new NotifyNotifyDtl { NotifyNo = "NTV.001", UserCode = "admin", FlagRead = true, CreateDTimeUTC = day, CreateBy = "admin", LogLUDTimeUTC = day, LogLUBy = "admin" },
+                new NotifyNotifyDtl { NotifyNo = "NTV.001", UserCode = "nnt_a", FlagRead = false, CreateDTimeUTC = day, CreateBy = "admin", LogLUDTimeUTC = day, LogLUBy = "admin" },
+                new NotifyNotifyDtl { NotifyNo = "NTV.002", UserCode = "nnt_a", FlagRead = false, CreateDTimeUTC = day, CreateBy = "admin", LogLUDTimeUTC = day, LogLUBy = "admin" },
+                new NotifyNotifyDtl { NotifyNo = "NTV.002", UserCode = "nnt_b", FlagRead = true, CreateDTimeUTC = day, CreateBy = "admin", LogLUDTimeUTC = day, LogLUBy = "nnt_b" },
+                new NotifyNotifyDtl { NotifyNo = "NTV.003", UserCode = "nnt_b", FlagRead = true, FlagActive = false, CreateDTimeUTC = day.AddMonths(-2), CreateBy = "nnt_b", LogLUDTimeUTC = day, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

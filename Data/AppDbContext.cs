@@ -44,6 +44,8 @@ public class AppDbContext : DbContext
     public DbSet<MstSvInosOrg> MstSvInosOrgs => Set<MstSvInosOrg>();
     public DbSet<MstSvMstNetwork> MstSvMstNetworks => Set<MstSvMstNetwork>();
     public DbSet<MstSvInosUser> MstSvInosUsers => Set<MstSvInosUser>();
+    public DbSet<NotifyNotify> NotifyNotifies => Set<NotifyNotify>();
+    public DbSet<NotifyNotifyDtl> NotifyNotifyDtls => Set<NotifyNotifyDtl>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -84,6 +86,8 @@ public class AppDbContext : DbContext
         b.Entity<MstSvInosOrg>(e => { e.HasIndex(x => new { x.OrgId, x.MST, x.InosId }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstSvMstNetwork>(e => { e.HasIndex(x => new { x.OrgId, x.NetworkID }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstSvInosUser>(e => { e.HasIndex(x => new { x.OrgId, x.MST, x.Email }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<NotifyNotify>(e => { e.HasIndex(x => new { x.OrgId, x.NotifyNo }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<NotifyNotifyDtl>(e => { e.HasIndex(x => new { x.OrgId, x.NotifyNo, x.UserCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }
