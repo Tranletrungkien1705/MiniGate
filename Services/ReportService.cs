@@ -195,6 +195,23 @@ public record VatRateListResult(
     List<VatRateRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách đại lý (Mst_Dealer) — kèm tên tỉnh (Mst_Province)
+/// và số khách hàng/NNT gắn với đại lý (count_MST = SLKH).
+/// </summary>
+public record MstDealerRow(
+    int Idx, string DLCode, string NetworkID, string DLCodeParent,
+    string DLBUCode, string DLBUPattern, string DLLevel, string DLType,
+    string ProvinceCode, string ProvinceName, string DLName, string DLAddress,
+    string DLPresentBy, string DLGovIDNumber, string DLEmail, string DLPhoneNo,
+    bool FlagActive, long CountMST,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách đại lý: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record MstDealerListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<MstDealerRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách người nộp thuế (Mst_NNT) — kèm thông tin cơ quan thuế (Mst_GovTaxID),
 /// tỉnh (Mst_Province), huyện (Mst_District) và đơn hàng license (MstSv_Inos_Org).
 /// </summary>
@@ -269,6 +286,10 @@ public interface IReportService
     Task<MstNntListResult> MstNntListAsync(int recordStart = 0, int recordCount = 50,
         string? mst = null, string? nntFullName = null, string? govTaxId = null,
         string? provinceCode = null, string? dlCode = null, bool? flagActive = null);
+
+    Task<MstDealerListResult> MstDealerListAsync(int recordStart = 0, int recordCount = 50,
+        string? dlCode = null, string? dlName = null, string? provinceCode = null,
+        string? dlType = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1027,5 +1048,57 @@ public class ReportService(AppDbContext db) : IReportService
         }).ToList();
 
         return new MstNntListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách đại lý (RptSv_Mst_Dealer_Get) — endpoint tổng hợp: trả về danh sách đại lý
+    /// (có phân trang + lọc theo mã đại lý / tên / tỉnh / loại / trạng thái) kèm tên tỉnh
+    /// (Mst_Province) và số khách hàng/NNT gắn với đại lý (count_MST = SLKH).
+    /// Port từ RptSv_Mst_Dealer_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_Mst_Dealer_Filter_Draft/#tbl_Mst_Dealer_Filter và các join Mst_Province /
+    /// #tbl_Mst_NNT_Filter_Count thành truy vấn LINQ.
+    /// </summary>
+    public async Task<MstDealerListResult> MstDealerListAsync(int recordStart = 0, int recordCount = 50,
+        string? dlCode = null, string? dlName = null, string? provinceCode = null,
+        string? dlType = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc đại lý theo mã / tên / tỉnh / loại / trạng thái (tương ứng #tbl_Mst_Dealer_Filter_Draft).
+        var items = await db.MstDealers
+            .Where(d => string.IsNullOrEmpty(dlCode) || d.DLCode == dlCode)
+            .Where(d => string.IsNullOrEmpty(dlName) || d.DLName.Contains(dlName))
+            .Where(d => string.IsNullOrEmpty(provinceCode) || d.ProvinceCode == provinceCode)
+            .Where(d => string.IsNullOrEmpty(dlType) || d.DLType == dlType)
+            .Where(d => flagActive == null || d.FlagActive == flagActive)
+            .OrderBy(d => d.DLCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_Mst_Dealer_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        // B3: tên tỉnh (tương ứng left join Mst_Province).
+        var provinces = await db.MstProvinces.ToListAsync();
+        var provinceByCode = provinces.ToDictionary(p => p.ProvinceCode, p => p);
+
+        // B4: số khách hàng/NNT theo đại lý (tương ứng #tbl_Mst_NNT_Filter_Count: count(MST) group by DLCode).
+        var nnts = await db.MstNnts.ToListAsync();
+        var countByDealer = nnts.GroupBy(n => n.DLCode).ToDictionary(g => g.Key, g => (long)g.Count());
+
+        var rows = page.Select((d, i) =>
+        {
+            provinceByCode.TryGetValue(d.ProvinceCode, out var p);
+            return new MstDealerRow(
+                recordStart + i + 1, d.DLCode, d.NetworkID, d.DLCodeParent,
+                d.DLBUCode, d.DLBUPattern, d.DLLevel, d.DLType,
+                d.ProvinceCode, p?.ProvinceName ?? "", d.DLName, d.DLAddress,
+                d.DLPresentBy, d.DLGovIDNumber, d.DLEmail, d.DLPhoneNo,
+                d.FlagActive, countByDealer.GetValueOrDefault(d.DLCode, 0L),
+                d.LogLUDTimeUTC, d.LogLUBy);
+        }).ToList();
+
+        return new MstDealerListResult(recordStart, recordCount, total, rows);
     }
 }

@@ -222,6 +222,17 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.ProvinceCode = provinceCode; ViewBag.DLCode = dlCode; ViewBag.FlagActive = flagActive;
         return View(await svc.MstNntListAsync(start, count, mst, nntFullName, govTaxId, provinceCode, dlCode, active));
     }
+
+    public async Task<IActionResult> Dealers(int? recordStart, int? recordCount, string? dlCode, string? dlName, string? provinceCode, string? dlType, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.DLCode = dlCode; ViewBag.DLName = dlName; ViewBag.ProvinceCode = provinceCode;
+        ViewBag.DLType = dlType; ViewBag.FlagActive = flagActive;
+        return View(await svc.MstDealerListAsync(start, count, dlCode, dlName, provinceCode, dlType, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller

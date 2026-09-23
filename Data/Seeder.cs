@@ -212,6 +212,16 @@ public static class Seeder
                 new SysObjectInModule { ObjectCode = "OBJ_DEALER", ModuleCode = "MOD_SYS", LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Danh mục đại lý (Mst_Dealer) cho danh sách đại lý (RptSv_Mst_Dealer_Get).
+        if (!await db.MstDealers.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstDealers.AddRange(
+                new MstDealer { DLCode = "DL001", NetworkID = "NET-DEMO", DLCodeParent = "VPBANK", DLBUCode = "IDOCNET.VPBANK.DL001", DLBUPattern = "IDOCNET.VPBANK.DL001%", DLLevel = "1", DLType = "CAP1", ProvinceCode = "01", DLName = "Đại lý Hà Nội", DLAddress = "Quận Ba Đình, Hà Nội", DLPresentBy = "Nguyễn Văn A", DLGovIDNumber = "001199001234", DLEmail = "dl001@demo.vn", DLPhoneNo = "0901234567", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstDealer { DLCode = "DL002", NetworkID = "NET-DEMO", DLCodeParent = "VPBANK", DLBUCode = "IDOCNET.VPBANK.DL002", DLBUPattern = "IDOCNET.VPBANK.DL002%", DLLevel = "2", DLType = "CAP2", ProvinceCode = "79", DLName = "Đại lý Hồ Chí Minh", DLAddress = "Quận 1, TP.HCM", DLPresentBy = "Lê Văn C", DLGovIDNumber = "079199002345", DLEmail = "dl002@demo.vn", DLPhoneNo = "0907654321", LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstDealer { DLCode = "DL003", NetworkID = "NET-DEMO", DLCodeParent = "VPBANK", DLBUCode = "IDOCNET.VPBANK.DL003", DLBUPattern = "IDOCNET.VPBANK.DL003%", DLLevel = "2", DLType = "CAP2", ProvinceCode = "48", DLName = "Đại lý Đà Nẵng (ngừng)", DLAddress = "Quận Hải Châu, Đà Nẵng", DLPresentBy = "Trần Thị D", DLGovIDNumber = "048199003456", DLEmail = "dl003@demo.vn", DLPhoneNo = "0909999999", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

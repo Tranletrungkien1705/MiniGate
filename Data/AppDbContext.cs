@@ -31,6 +31,7 @@ public class AppDbContext : DbContext
     public DbSet<SysAccess> SysAccesses => Set<SysAccess>();
     public DbSet<SysObjectInModule> SysObjectInModules => Set<SysObjectInModule>();
     public DbSet<MstVatRate> MstVatRates => Set<MstVatRate>();
+    public DbSet<MstDealer> MstDealers => Set<MstDealer>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -58,6 +59,7 @@ public class AppDbContext : DbContext
         b.Entity<SysAccess>(e => { e.HasIndex(x => new { x.OrgId, x.GroupCode, x.ObjectCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<SysObjectInModule>(e => { e.HasIndex(x => new { x.OrgId, x.ObjectCode, x.ModuleCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
         b.Entity<MstVatRate>(e => { e.HasIndex(x => new { x.OrgId, x.VATRateCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
+        b.Entity<MstDealer>(e => { e.HasIndex(x => new { x.OrgId, x.DLCode }).IsUnique(); e.HasQueryFilter(x => x.OrgId == _orgId); });
     }
 
     public override int SaveChanges() { StampOrg(); return base.SaveChanges(); }

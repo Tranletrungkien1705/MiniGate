@@ -361,3 +361,30 @@ public class MstVatRate : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
+
+/// <summary>
+/// Đại lý (Mst_Dealer) — danh mục đại lý phân cấp (cấp 1/cấp 2) theo mạng/đại lý.
+/// Dùng cho danh sách đại lý (RptSv_Mst_Dealer_Get).
+/// </summary>
+public class MstDealer : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string DLCode { get; set; } = "";          // mã đại lý
+    public string NetworkID { get; set; } = "";       // mạng/đại lý
+    public string DLCodeParent { get; set; } = "";    // mã đại lý cấp trên
+    public string DLBUCode { get; set; } = "";        // mã đơn vị nghiệp vụ (DLBUCode)
+    public string DLBUPattern { get; set; } = "";     // mẫu LIKE đơn vị nghiệp vụ (DLBUPattern)
+    public string DLLevel { get; set; } = "";         // cấp đại lý (DLLevel)
+    public string DLType { get; set; } = "";          // loại đại lý (DLType)
+    public string ProvinceCode { get; set; } = "";    // mã tỉnh
+    public string DLName { get; set; } = "";          // tên đại lý
+    public string DLAddress { get; set; } = "";       // địa chỉ
+    public string DLPresentBy { get; set; } = "";     // người đại diện
+    public string DLGovIDNumber { get; set; } = "";   // số giấy tờ (DLGovIDNumber)
+    public string DLEmail { get; set; } = "";         // email
+    public string DLPhoneNo { get; set; } = "";       // điện thoại
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}
