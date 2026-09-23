@@ -1,0 +1,71 @@
+@model SysObjectListResult
+@{ ViewData["Title"] = "Đối tượng/chức năng hệ thống"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-grid-3x3-gap me-1"></i>Danh mục đối tượng/chức năng hệ thống (RptSv_Sys_Object)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Mã đối tượng (ObjectCode)</label><input name="objectCode" value="@ViewBag.ObjectCode" class="form-control form-control-sm" placeholder="VD: OBJ_INVOICE" /></div>
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Mã dịch vụ (ServiceCode)</label><input name="serviceCode" value="@ViewBag.ServiceCode" class="form-control form-control-sm" placeholder="VD: INVOICE" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Loại đối tượng</label><input name="objectType" value="@ViewBag.ObjectType" class="form-control form-control-sm" placeholder="VD: SCREEN" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Trạng thái</label>
+            <select name="flagActive" class="form-select form-select-sm">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.FlagActive as string))">Tất cả</option>
+                <option value="1" selected="@(ViewBag.FlagActive == "1")">Hoạt động</option>
+                <option value="0" selected="@(ViewBag.FlagActive == "0")">Ngừng</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-1"><label class="form-label small mb-1">Số/trang</label><input type="number" name="recordCount" value="@ViewBag.RecordCount" class="form-control form-control-sm" min="1" /></div>
+        <div class="col-12 col-md-1"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i></button></div>
+    </form>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Danh sách đối tượng/chức năng</h6>
+        <span class="text-muted small">@Model.TotalCount bản ghi · trang bắt đầu @Model.RecordStart</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Mã đối tượng</th>
+                <th>Tên đối tượng</th>
+                <th>Mạng/đại lý</th>
+                <th>Dịch vụ</th>
+                <th>Loại</th>
+                <th class="text-center">Chạy modal</th>
+                <th class="text-center">Trạng thái</th>
+                <th>Cập nhật cuối</th>
+                <th>Người cập nhật</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="fw-semibold" style="font-family:monospace">@r.ObjectCode</td>
+                <td>@(string.IsNullOrEmpty(r.ObjectName) ? "—" : r.ObjectName)</td>
+                <td class="small">@(string.IsNullOrEmpty(r.NetworkID) ? "—" : r.NetworkID)</td>
+                <td class="small">@(string.IsNullOrEmpty(r.ServiceCode) ? "—" : r.ServiceCode)</td>
+                <td class="small">@(string.IsNullOrEmpty(r.ObjectType) ? "—" : r.ObjectType)</td>
+                <td class="text-center">
+                    @if (r.FlagExecModal == "1" || r.FlagExecModal.Equals("Yes", StringComparison.OrdinalIgnoreCase)) { <i class="bi bi-check-circle-fill" style="color:#059669"></i> }
+                    else { <i class="bi bi-dash-circle text-muted"></i> }
+                </td>
+                <td class="text-center">
+                    @if (r.FlagActive) { <span class="badge" style="background:#059669">Hoạt động</span> }
+                    else { <span class="badge bg-secondary">Ngừng</span> }
+                </td>
+                <td class="small">@r.LogLUDTimeUTC.ToString("yyyy-MM-dd HH:mm")</td>
+                <td class="small">@(string.IsNullOrEmpty(r.LogLUBy) ? "—" : r.LogLUBy)</td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="10" class="text-center text-muted py-4">Không có đối tượng nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh mục đối tượng/chức năng hệ thống (màn hình/nghiệp vụ có thể cấp quyền) kèm thông tin mạng/đại lý, tên, dịch vụ, loại, chạy modal, trạng thái, có phân trang + lọc theo mã đối tượng / mã dịch vụ / loại đối tượng / trạng thái.
+    </p>
+</div></div>

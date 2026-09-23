@@ -166,6 +166,20 @@ public record SysAccessListResult(
     int RecordStart, int RecordCount, long TotalCount,
     List<SysAccessRow> Rows);
 
+/// <summary>
+/// Một dòng của danh sách đối tượng/chức năng hệ thống (RptSv_Sys_Object) —
+/// danh mục các màn hình/nghiệp vụ có thể được cấp quyền truy cập.
+/// </summary>
+public record SysObjectRow(
+    int Idx, string ObjectCode, string NetworkID, string ObjectName,
+    string ServiceCode, string ObjectType, string FlagExecModal, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách đối tượng/chức năng hệ thống: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record SysObjectListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<SysObjectRow> Rows);
+
 public interface IReportService
 {
     Task<InvoiceSummaryResult> InvoiceSummaryAsync(DateTime from, DateTime to,
@@ -197,6 +211,9 @@ public interface IReportService
 
     Task<SysAccessListResult> SysAccessListAsync(int recordStart = 0, int recordCount = 50,
         string? groupCode = null, string? objectCode = null);
+
+    Task<SysObjectListResult> SysObjectListAsync(int recordStart = 0, int recordCount = 50,
+        string? objectCode = null, string? serviceCode = null, string? objectType = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -791,5 +808,41 @@ public class ReportService(AppDbContext db) : IReportService
         }).ToList();
 
         return new SysAccessListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách đối tượng/chức năng hệ thống (RptSv_Sys_Object_Get) — endpoint tổng hợp:
+    /// trả về danh mục các màn hình/nghiệp vụ (đối tượng phân quyền) kèm thông tin
+    /// (mạng/đại lý, tên, dịch vụ, loại, chạy modal, trạng thái), có phân trang + lọc theo
+    /// mã đối tượng / mã dịch vụ / loại đối tượng / trạng thái.
+    /// Port từ RptSv_Sys_Object_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_RptSv_Sys_Object_Filter_Draft/#tbl_RptSv_Sys_Object_Filter và khối select
+    /// RptSv_Sys_Object thành truy vấn LINQ.
+    /// </summary>
+    public async Task<SysObjectListResult> SysObjectListAsync(int recordStart = 0, int recordCount = 50,
+        string? objectCode = null, string? serviceCode = null, string? objectType = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc đối tượng theo mã / dịch vụ / loại / trạng thái (tương ứng #tbl_RptSv_Sys_Object_Filter_Draft).
+        var items = await db.SysObjects
+            .Where(o => string.IsNullOrEmpty(objectCode) || o.ObjectCode == objectCode)
+            .Where(o => string.IsNullOrEmpty(serviceCode) || o.ServiceCode == serviceCode)
+            .Where(o => string.IsNullOrEmpty(objectType) || o.ObjectType == objectType)
+            .Where(o => flagActive == null || o.FlagActive == flagActive)
+            .OrderBy(o => o.ObjectCode)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_RptSv_Sys_Object_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((o, i) => new SysObjectRow(
+            recordStart + i + 1, o.ObjectCode, o.NetworkID, o.ObjectName,
+            o.ServiceCode, o.ObjectType, o.FlagExecModal, o.FlagActive,
+            o.LogLUDTimeUTC, o.LogLUBy)).ToList();
+
+        return new SysObjectListResult(recordStart, recordCount, total, rows);
     }
 }

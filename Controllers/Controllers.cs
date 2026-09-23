@@ -182,6 +182,16 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.GroupCode = groupCode; ViewBag.ObjectCode = objectCode;
         return View(await svc.SysAccessListAsync(start, count, groupCode, objectCode));
     }
+
+    public async Task<IActionResult> Objects(int? recordStart, int? recordCount, string? objectCode, string? serviceCode, string? objectType, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.ObjectCode = objectCode; ViewBag.ServiceCode = serviceCode; ViewBag.ObjectType = objectType; ViewBag.FlagActive = flagActive;
+        return View(await svc.SysObjectListAsync(start, count, objectCode, serviceCode, objectType, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller
