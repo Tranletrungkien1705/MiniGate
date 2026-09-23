@@ -425,6 +425,19 @@ public record NntTypeListResult(
     List<NntTypeRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách loại hình kinh doanh (iNOS_Mst_BizType) —
+/// mã/tên loại hình, trạng thái và thông tin cập nhật cuối.
+/// </summary>
+public record BizTypeRow(
+    int Idx, string BizType, string BizTypeName, string NetworkID, bool FlagActive,
+    DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách loại hình kinh doanh: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record BizTypeListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<BizTypeRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách cơ quan thuế (Mst_GovTaxID) —
 /// mã/tên cơ quan thuế, cấp trên, đơn vị nghiệp vụ, tỉnh/huyện, cấp, địa chỉ, liên hệ, trạng thái.
 /// </summary>
@@ -558,6 +571,9 @@ public interface IReportService
 
     Task<NntTypeListResult> NntTypeListAsync(int recordStart = 0, int recordCount = 50,
         string? nntType = null, bool? flagActive = null);
+
+    Task<BizTypeListResult> BizTypeListAsync(int recordStart = 0, int recordCount = 50,
+        string? bizType = null, string? networkId = null, bool? flagActive = null);
 
     Task<GovTaxIdListResult> GovTaxIdListAsync(int recordStart = 0, int recordCount = 50,
         string? govTaxId = null, string? govTaxName = null, string? networkId = null,
@@ -1706,6 +1722,37 @@ public class ReportService(AppDbContext db) : IReportService
             t.LogLUDTimeUTC, t.LogLUBy)).ToList();
 
         return new NntTypeListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách loại hình kinh doanh (iNOS_Mst_BizType) — endpoint tổng hợp:
+    /// trả về danh mục loại hình (BizType/BizTypeName) kèm trạng thái, có phân trang + lọc.
+    /// Port từ RptSv_iNOS_Mst_BizType_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_iNOS_Mst_BizType_Filter_Draft/#tbl_iNOS_Mst_BizType_Filter thành truy vấn LINQ.
+    /// </summary>
+    public async Task<BizTypeListResult> BizTypeListAsync(int recordStart = 0, int recordCount = 50,
+        string? bizType = null, string? networkId = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc loại hình theo mã / mạng-đại lý / trạng thái (tương ứng #tbl_iNOS_Mst_BizType_Filter_Draft).
+        var items = await db.InosMstBizTypes
+            .Where(t => string.IsNullOrEmpty(bizType) || t.BizType == bizType)
+            .Where(t => string.IsNullOrEmpty(networkId) || t.NetworkID == networkId)
+            .Where(t => flagActive == null || t.FlagActive == flagActive)
+            .OrderBy(t => t.BizType)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_iNOS_Mst_BizType_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((t, i) => new BizTypeRow(
+            recordStart + i + 1, t.BizType, t.BizTypeName, t.NetworkID, t.FlagActive,
+            t.LogLUDTimeUTC, t.LogLUBy)).ToList();
+
+        return new BizTypeListResult(recordStart, recordCount, total, rows);
     }
 
     /// <summary>

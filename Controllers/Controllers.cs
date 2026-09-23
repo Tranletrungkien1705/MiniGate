@@ -325,6 +325,16 @@ public class ReportController(IReportService svc) : Controller
         return View(await svc.NntTypeListAsync(start, count, nntType, active));
     }
 
+    public async Task<IActionResult> BizTypes(int? recordStart, int? recordCount, string? bizType, string? networkId, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.BizType = bizType; ViewBag.NetworkID = networkId; ViewBag.FlagActive = flagActive;
+        return View(await svc.BizTypeListAsync(start, count, bizType, networkId, active));
+    }
+
     public async Task<IActionResult> UserSummary(string? userCode)
     {
         ViewBag.UserCode = userCode;
