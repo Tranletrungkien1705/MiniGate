@@ -324,6 +324,20 @@ public record MstNetworkListResult(
     List<MstNetworkRow> Rows);
 
 /// <summary>
+/// Một dòng của danh sách người dùng iNOS (MstSv_Inos_User) —
+/// tài khoản đăng nhập iNOS gắn với MST, kèm cờ kích hoạt email/quản trị/gửi email.
+/// </summary>
+public record InosUserRow(
+    int Idx, string MST, string Email, string Name, string Language, string TimeZone,
+    string UUID, long InosUserId, bool FlagEmailActivate, bool FlagAdmin, bool FlagEmailSend,
+    bool FlagActive, DateTime LogLUDTimeUTC, string LogLUBy);
+
+/// <summary>Kết quả danh sách người dùng iNOS: trang hiện tại + tổng số bản ghi khớp bộ lọc.</summary>
+public record InosUserListResult(
+    int RecordStart, int RecordCount, long TotalCount,
+    List<InosUserRow> Rows);
+
+/// <summary>
 /// Một dòng của danh sách giải pháp hệ thống (Sys_Solution) —
 /// mã/tên giải pháp, mạng-đại lý, trạng thái và thông tin cập nhật cuối.
 /// </summary>
@@ -493,6 +507,9 @@ public interface IReportService
     Task<MstNetworkListResult> MstNetworkListAsync(int recordStart = 0, int recordCount = 50,
         string? networkId = null, string? networkName = null, string? groupNetworkId = null,
         string? mst = null, bool? flagActive = null);
+
+    Task<InosUserListResult> InosUserListAsync(int recordStart = 0, int recordCount = 50,
+        string? mst = null, string? email = null, string? name = null, bool? flagActive = null);
 }
 
 /// <summary>
@@ -1738,5 +1755,38 @@ public class ReportService(AppDbContext db) : IReportService
             n.LogLUDTimeUTC, n.LogLUBy)).ToList();
 
         return new MstNetworkListResult(recordStart, recordCount, total, rows);
+    }
+
+    /// <summary>
+    /// Danh sách người dùng iNOS (RptSv_MstSv_Inos_User_Get) — endpoint tổng hợp: trả về danh sách
+    /// tài khoản iNOS (MstSv_Inos_User) gắn với MST, có phân trang + lọc theo MST / email / tên / trạng thái.
+    /// Port từ RptSv_MstSv_Inos_User_Get (MobileGate) — gộp các bảng tạm
+    /// #tbl_MstSv_Inos_User_Filter_Draft/#tbl_MstSv_Inos_User_Filter và khối select MstSv_Inos_User thành LINQ.
+    /// </summary>
+    public async Task<InosUserListResult> InosUserListAsync(int recordStart = 0, int recordCount = 50,
+        string? mst = null, string? email = null, string? name = null, bool? flagActive = null)
+    {
+        if (recordStart < 0) recordStart = 0;
+        if (recordCount <= 0) recordCount = 50;
+
+        // B1: lọc người dùng iNOS theo MST / email / tên / trạng thái (tương ứng #tbl_MstSv_Inos_User_Filter_Draft).
+        var items = await db.MstSvInosUsers
+            .Where(u => string.IsNullOrEmpty(mst) || u.MST == mst)
+            .Where(u => string.IsNullOrEmpty(email) || u.Email.Contains(email))
+            .Where(u => string.IsNullOrEmpty(name) || u.Name.Contains(name))
+            .Where(u => flagActive == null || u.FlagActive == flagActive)
+            .OrderBy(u => u.MST).ThenBy(u => u.Email)
+            .ToListAsync();
+
+        // B2: phân trang (tương ứng #tbl_MstSv_Inos_User_Filter với MyIdxSeq).
+        var total = items.Count;
+        var page = items.Skip(recordStart).Take(recordCount).ToList();
+
+        var rows = page.Select((u, i) => new InosUserRow(
+            recordStart + i + 1, u.MST, u.Email, u.Name, u.Language, u.TimeZone,
+            u.UUID, u.InosUserId, u.FlagEmailActivate, u.FlagAdmin, u.FlagEmailSend,
+            u.FlagActive, u.LogLUDTimeUTC, u.LogLUBy)).ToList();
+
+        return new InosUserListResult(recordStart, recordCount, total, rows);
     }
 }

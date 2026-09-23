@@ -1,0 +1,72 @@
+@model InosUserListResult
+@{ ViewData["Title"] = "Danh sách người dùng iNOS"; }
+<div class="card mb-3"><div class="card-body">
+    <h6 class="fw-bold mb-3"><i class="bi bi-person-badge me-1"></i>Danh sách người dùng iNOS (MstSv_Inos_User)</h6>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">MST</label><input name="mst" value="@ViewBag.MST" class="form-control form-control-sm" placeholder="VD: 0101234567" /></div>
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Email</label><input name="email" value="@ViewBag.Email" class="form-control form-control-sm" placeholder="VD: a@demo.vn" /></div>
+        <div class="col-6 col-md-3"><label class="form-label small mb-1">Tên</label><input name="name" value="@ViewBag.Name" class="form-control form-control-sm" placeholder="VD: Nguyễn" /></div>
+        <div class="col-6 col-md-2"><label class="form-label small mb-1">Trạng thái</label>
+            <select name="flagActive" class="form-select form-select-sm">
+                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.FlagActive as string))">Tất cả</option>
+                <option value="1" selected="@(ViewBag.FlagActive == "1")">Đang hoạt động</option>
+                <option value="0" selected="@(ViewBag.FlagActive == "0")">Ngừng hoạt động</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-1"><label class="form-label small mb-1">Số/trang</label><input type="number" name="recordCount" value="@ViewBag.RecordCount" class="form-control form-control-sm" min="1" /></div>
+        <div class="col-12 col-md-1"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i></button></div>
+    </form>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Danh sách người dùng iNOS</h6>
+        <span class="text-muted small">@Model.TotalCount bản ghi · trang bắt đầu @Model.RecordStart</span>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>MST</th>
+                <th>Email</th>
+                <th>Tên</th>
+                <th>Ngôn ngữ</th>
+                <th>Múi giờ</th>
+                <th>UUID</th>
+                <th class="text-center">Kích hoạt email</th>
+                <th class="text-center">Quản trị</th>
+                <th class="text-center">Gửi email</th>
+                <th class="text-center">Trạng thái</th>
+                <th>Cập nhật cuối</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            <tr>
+                <td class="text-muted small">@r.Idx</td>
+                <td class="small" style="font-family:monospace">@r.MST</td>
+                <td class="fw-semibold">@r.Email</td>
+                <td>@r.Name</td>
+                <td class="small text-muted">@(string.IsNullOrEmpty(r.Language) ? "—" : r.Language)</td>
+                <td class="small text-muted">@(string.IsNullOrEmpty(r.TimeZone) ? "—" : r.TimeZone)</td>
+                <td class="small text-muted" style="font-family:monospace">@(string.IsNullOrEmpty(r.UUID) ? "—" : r.UUID)</td>
+                <td class="text-center">@if (r.FlagEmailActivate) { <i class="bi bi-check-circle-fill text-success"></i> } else { <i class="bi bi-dash-circle text-muted"></i> }</td>
+                <td class="text-center">@if (r.FlagAdmin) { <i class="bi bi-check-circle-fill text-success"></i> } else { <i class="bi bi-dash-circle text-muted"></i> }</td>
+                <td class="text-center">@if (r.FlagEmailSend) { <i class="bi bi-check-circle-fill text-success"></i> } else { <i class="bi bi-dash-circle text-muted"></i> }</td>
+                <td class="text-center">
+                    @if (r.FlagActive) { <span class="badge" style="background:#059669">Đang hoạt động</span> }
+                    else { <span class="badge bg-secondary">Ngừng hoạt động</span> }
+                </td>
+                <td class="small">@r.LogLUDTimeUTC.ToString("yyyy-MM-dd HH:mm")<div class="text-muted small">@r.LogLUBy</div></td>
+            </tr>
+        }
+        @if (Model.Rows.Count == 0) { <tr><td colspan="12" class="text-center text-muted py-4">Không có người dùng iNOS nào khớp bộ lọc.</td></tr> }
+        </tbody>
+    </table>
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+        <i class="bi bi-info-circle me-1"></i>Endpoint tổng hợp: trả về danh sách người dùng iNOS (MstSv_Inos_User), có phân trang + lọc theo MST / email / tên / trạng thái.
+    </p>
+</div></div>

@@ -612,3 +612,28 @@ public class MstSvMstNetwork : IOrgOwned
     public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
     public string LogLUBy { get; set; } = "";         // người cập nhật cuối
 }
+
+/// <summary>
+/// Người dùng iNOS (MstSv_Inos_User) — tài khoản đăng nhập hệ sinh thái iNOS gắn với MST,
+/// kèm cờ kích hoạt email/quản trị/gửi email và thông tin cập nhật cuối.
+/// Dùng cho danh sách người dùng iNOS (RptSv_MstSv_Inos_User_Get).
+/// </summary>
+public class MstSvInosUser : IOrgOwned
+{
+    public int Id { get; set; }
+    public Guid OrgId { get; set; }
+    public string MST { get; set; } = "";            // MST người nộp thuế
+    public string Email { get; set; } = "";          // email đăng nhập
+    public string Name { get; set; } = "";           // tên hiển thị
+    public string Password { get; set; } = "";       // mật khẩu (đã mã hóa)
+    public string Language { get; set; } = "";       // ngôn ngữ
+    public string TimeZone { get; set; } = "";       // múi giờ
+    public string UUID { get; set; } = "";           // định danh UUID
+    public long InosUserId { get; set; }              // id người dùng iNOS (Id)
+    public bool FlagEmailActivate { get; set; }       // đã kích hoạt email
+    public bool FlagAdmin { get; set; }               // quản trị iNOS
+    public bool FlagEmailSend { get; set; }           // cho phép gửi email
+    public bool FlagActive { get; set; } = true;
+    public DateTime LogLUDTimeUTC { get; set; }        // thời điểm cập nhật cuối
+    public string LogLUBy { get; set; } = "";         // người cập nhật cuối
+}

@@ -350,6 +350,17 @@ public static class Seeder
                 new MstSvMstNetwork { NetworkID = "NET-OLD", NetworkName = "Mạng cũ (ngừng)", GroupNetworkID = "GRP-NET", CoreAddr = "10.9.0.1", PingAddr = "10.9.0.2", XSysAddr = "10.9.0.3", WSUrlAddr = "https://ws.old.demo.vn", DBUrlAddr = "10.9.0.4", MST = "0109999999", FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
             await db.SaveChangesAsync();
         }
+        // Người dùng iNOS (MstSv_Inos_User) cho danh sách người dùng iNOS (RptSv_MstSv_Inos_User_Get).
+        if (!await db.MstSvInosUsers.AnyAsync())
+        {
+            var upd = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(1);
+            db.MstSvInosUsers.AddRange(
+                new MstSvInosUser { MST = "0101234567", Email = "a@demo.vn", Name = "Nguyễn Văn A", Password = "***", Language = "vi", TimeZone = "SE Asia Standard Time", UUID = "11111111-1111-1111-1111-111111111111", InosUserId = 9001, FlagEmailActivate = true, FlagAdmin = true, FlagEmailSend = true, LogLUDTimeUTC = upd, LogLUBy = "admin" },
+                new MstSvInosUser { MST = "0101234567", Email = "ketoan.a@demo.vn", Name = "Trần Thị B", Password = "***", Language = "vi", TimeZone = "SE Asia Standard Time", UUID = "22222222-2222-2222-2222-222222222222", InosUserId = 9002, FlagEmailActivate = true, FlagAdmin = false, FlagEmailSend = true, LogLUDTimeUTC = upd, LogLUBy = "nnt_a" },
+                new MstSvInosUser { MST = "0107654321", Email = "b@demo.vn", Name = "Lê Văn C", Password = "***", Language = "en", TimeZone = "UTC", UUID = "33333333-3333-3333-3333-333333333333", InosUserId = 9003, FlagEmailActivate = true, FlagAdmin = true, FlagEmailSend = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" },
+                new MstSvInosUser { MST = "0109999999", Email = "c@demo.vn", Name = "Phạm Thị D (ngừng)", Password = "***", Language = "vi", TimeZone = "SE Asia Standard Time", UUID = "44444444-4444-4444-4444-444444444444", InosUserId = 9004, FlagEmailActivate = false, FlagAdmin = false, FlagEmailSend = false, FlagActive = false, LogLUDTimeUTC = upd, LogLUBy = "nnt_b" });
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)

@@ -352,6 +352,16 @@ public class ReportController(IReportService svc) : Controller
         ViewBag.GroupNetworkID = groupNetworkId; ViewBag.MST = mst; ViewBag.FlagActive = flagActive;
         return View(await svc.MstNetworkListAsync(start, count, networkId, networkName, groupNetworkId, mst, active));
     }
+
+    public async Task<IActionResult> InosUsers(int? recordStart, int? recordCount, string? mst, string? email, string? name, string? flagActive)
+    {
+        var start = recordStart ?? 0;
+        var count = recordCount ?? 50;
+        bool? active = flagActive switch { "1" => true, "0" => false, _ => null };
+        ViewBag.RecordStart = start; ViewBag.RecordCount = count;
+        ViewBag.MST = mst; ViewBag.Email = email; ViewBag.Name = name; ViewBag.FlagActive = flagActive;
+        return View(await svc.InosUserListAsync(start, count, mst, email, name, active));
+    }
 }
 
 public class OrgController(AppDbContext db) : Controller
