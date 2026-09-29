@@ -9,6 +9,7 @@ public static class Seeder
     {
         await db.Database.EnsureCreatedAsync();
         await MigratePostgresAsync(db);
+        await MigrateMstSvNetworkAsync(db);
 
         if (!await db.Orgs.AnyAsync(o => o.Id == TenantContext.DefaultOrgId))
         {
@@ -69,6 +70,69 @@ public static class Seeder
             db.Clients.Add(new ApiClient { Name = "Mobile App Demo", ApiKey = "gk_demo_mobile", RateLimitPerMin = 60 });
             await db.SaveChangesAsync();
         }
+
+        // ─── Sổ mạng cổng (port 1:1 MstSv_Mst_Network) ───
+        // Nguồn: idN.MobileGate.Biz/Common.cs:225-231 nạp CSV mix "WSUrlAddr,WSUrlAddrNew,DefaultVersion"
+        // rồi Common.cs:411-465 chọn URL theo AppVersion so với DefaultVersion.
+        // Seed 1 mạng demo để endpoint /MasterServer/WA_MstSv_Sys_User_Login có dữ liệu tra.
+        if (!await db.MstSvNetworks.AnyAsync())
+        {
+            db.MstSvNetworks.Add(new MstSvNetwork
+            {
+                NetworkID = "DEMO",
+                NetworkName = "Mạng demo MiniGate",
+                WSUrlAddr = "https://minihtc.onrender.com",          // CurrLink
+                WSUrlAddrNew = "https://minipim.onrender.com",       // NewLink
+                DefaultVersion = "1.0.0",                            // AppVer <= mốc này thì dùng CurrLink
+                FlagActive = "1",                                    // Const.Main.BE.cs:59 Flag.Active
+                LogLUDTimeUTC = DateTime.UtcNow,
+                LogLUBy = "SEED"
+            });
+            db.MstSvNetworks.Add(new MstSvNetwork
+            {
+                NetworkID = "DEMO_OFF",
+                NetworkName = "Mạng demo đã khoá (để thử mã lỗi FlagActiveNotMatched)",
+                WSUrlAddr = "https://minihtc.onrender.com",
+                DefaultVersion = "1.0.0",
+                FlagActive = "0",                                    // Const.Main.BE.cs:60 Flag.Inactive
+                LogLUDTimeUTC = DateTime.UtcNow,
+                LogLUBy = "SEED"
+            });
+            await db.SaveChangesAsync();
+        }
+    }
+
+    /// <summary>
+    /// Tạo bảng MstSvNetworks trên DB ĐÃ TỒN TẠI (EnsureCreated chỉ tạo khi DB còn trắng,
+    /// nên app đang chạy DB cũ sẽ thiếu bảng này). Bọc try/catch giống MigratePostgresAsync.
+    /// </summary>
+    private static async Task MigrateMstSvNetworkAsync(AppDbContext db)
+    {
+        var def = TenantContext.DefaultOrgId;
+        string sqlTable, sqlIndex;
+        if (db.Database.IsNpgsql())
+        {
+            sqlTable = "CREATE TABLE IF NOT EXISTS minigate.\"MstSvNetworks\" ("
+                + "\"Id\" serial PRIMARY KEY, \"OrgId\" uuid NOT NULL DEFAULT '" + def + "', "
+                + "\"NetworkID\" text NOT NULL DEFAULT '', \"NetworkName\" text NULL, \"GroupNetworkID\" text NULL, "
+                + "\"CoreAddr\" text NULL, \"PingAddr\" text NULL, \"XSysAddr\" text NULL, "
+                + "\"WSUrlAddr\" text NULL, \"WSUrlAddrNew\" text NULL, \"DefaultVersion\" text NULL, "
+                + "\"DBUrlAddr\" text NULL, \"FlagActive\" text NOT NULL DEFAULT '1', "
+                + "\"LogLUDTimeUTC\" timestamp NULL, \"LogLUBy\" text NULL, \"MST\" text NULL)";
+            sqlIndex = "CREATE UNIQUE INDEX IF NOT EXISTS \"IX_MstSvNetworks_OrgId_NetworkID\" ON minigate.\"MstSvNetworks\" (\"OrgId\", \"NetworkID\")";
+        }
+        else
+        {
+            sqlTable = "CREATE TABLE IF NOT EXISTS \"MstSvNetworks\" ("
+                + "\"Id\" INTEGER NOT NULL CONSTRAINT \"PK_MstSvNetworks\" PRIMARY KEY AUTOINCREMENT, "
+                + "\"OrgId\" TEXT NOT NULL, \"NetworkID\" TEXT NOT NULL, \"NetworkName\" TEXT NULL, "
+                + "\"GroupNetworkID\" TEXT NULL, \"CoreAddr\" TEXT NULL, \"PingAddr\" TEXT NULL, "
+                + "\"XSysAddr\" TEXT NULL, \"WSUrlAddr\" TEXT NULL, \"WSUrlAddrNew\" TEXT NULL, "
+                + "\"DefaultVersion\" TEXT NULL, \"DBUrlAddr\" TEXT NULL, \"FlagActive\" TEXT NOT NULL DEFAULT '1', "
+                + "\"LogLUDTimeUTC\" TEXT NULL, \"LogLUBy\" TEXT NULL, \"MST\" TEXT NULL)";
+            sqlIndex = "CREATE UNIQUE INDEX IF NOT EXISTS \"IX_MstSvNetworks_OrgId_NetworkID\" ON \"MstSvNetworks\" (\"OrgId\", \"NetworkID\")";
+        }
+        foreach (var s in new[] { sqlTable, sqlIndex }) try { await db.Database.ExecuteSqlRawAsync(s); } catch { }
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)
