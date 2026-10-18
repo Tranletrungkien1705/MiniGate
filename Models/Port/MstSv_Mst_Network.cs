@@ -31,6 +31,7 @@ public class MstSv_Mst_Network
     public string? DBUrlAddr { get; set; }                  // Địa chỉ Database Varchar(200)
     public string? FlagActive { get; set; }                 // Trạng thái hoạt động Varchar(1)
     public string? MinVersion { get; set; }                 // Phiên bản tối thiểu Varchar(50) (EQR.cs:13760)
+    public string? DefaultVersion { get; set; }             // Phiên bản mặc định Varchar(50) (EQR.cs:22017)
     public string? LogLUDTimeUTC { get; set; }              // Thời gian cập nhật Varchar(50)
     public string? LogLUBy { get; set; }                    // Người cập nhật Varchar(50)
     public string? MST { get; set; }                        // Mã số thuế Varchar(50)
@@ -53,6 +54,7 @@ public class MstSv_Mst_NetworkConfig : IEntityTypeConfiguration<MstSv_Mst_Networ
         b.Property(x => x.DBUrlAddr).HasMaxLength(200);
         b.Property(x => x.FlagActive).HasMaxLength(1);
         b.Property(x => x.MinVersion).HasMaxLength(50);
+        b.Property(x => x.DefaultVersion).HasMaxLength(50);
         b.Property(x => x.LogLUDTimeUTC).HasMaxLength(50);
         b.Property(x => x.LogLUBy).HasMaxLength(50);
         b.Property(x => x.MST).HasMaxLength(50);
@@ -78,6 +80,7 @@ public class MstSv_Mst_NetworkSeeder : IPortSeeder
                 NetworkID = "NET_TEST_01",
                 NetworkName = "Mạng thử nghiệm 01",
                 MinVersion = "1.0.0",
+                DefaultVersion = "2.0.0",
                 FlagActive = "1",
                 LogLUBy = "port",
                 LogLUDTimeUTC = "2026-10-18 00:00:00"
@@ -87,6 +90,7 @@ public class MstSv_Mst_NetworkSeeder : IPortSeeder
                 NetworkID = "NET_TEST_02",
                 NetworkName = "Mạng thử nghiệm 02",
                 MinVersion = "2.3.4",
+                DefaultVersion = "3.0.0",
                 FlagActive = "1",
                 LogLUBy = "port",
                 LogLUDTimeUTC = "2026-10-18 00:00:00"
