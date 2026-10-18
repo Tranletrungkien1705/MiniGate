@@ -25,6 +25,12 @@ public static class PortResult
             var key = Convert.ToString(paramCouples[i]) ?? $"p{i}";
             p[key] = sanitize && key == "Exception" ? "Lỗi xử lý dữ liệu (chi tiết đã ghi nhật ký máy chủ)." : paramCouples[i + 1];
         }
-        return new BadRequestObjectResult(new { Success = false, ErrorCode = "ErridnLoyalty." + errorCode, Params = p });
+        return new BadRequestObjectResult(new { Success = false, ErrorCode = PortErr.Prefix + errorCode, Params = p });
     }
+}
+
+/// <summary>Tiền tố mã lỗi nguồn MobileGate: TError.ErridNTVAN.X = "ErridN.MobileGate.X" (Error.DMS.Chain.cs).</summary>
+public static class PortErr
+{
+    public const string Prefix = "ErridN.MobileGate.";
 }
