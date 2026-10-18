@@ -69,6 +69,7 @@ public static class Seeder
             db.Clients.Add(new ApiClient { Name = "Mobile App Demo", ApiKey = "gk_demo_mobile", RateLimitPerMin = 60 });
             await db.SaveChangesAsync();
         }
+        await PortSchema.EnsureAsync(db);   // bang/seed port 1-1 (xem Data/PortSchema.cs)
     }
 
     private static async Task MigratePostgresAsync(AppDbContext db)
