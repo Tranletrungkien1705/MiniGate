@@ -4,7 +4,7 @@ Nguồn mẫu số: `D:\idocNet\2019.9.MobileGate\Dev\V10\idN.MobileGate.Biz.Web
 
 **Mẫu số (N)**: 750
 
-**Tiến độ hiện tại**: 6/750 (0.8%)
+**Tiến độ hiện tại**: 7/750 (0.93%)
 
 Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã có` (đã port từ trước, có bằng chứng) · `Bỏ` (scaffold/không nghiệp vụ, ghi lý do) · `Cần xem tay`.
 
@@ -759,4 +759,4 @@ Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã c�
 | 747 | QRBrandController/WA_Inv_InventoryVerifiedID_BoxGet | Chưa làm | - |
 | 748 | QRBrandController/WA_Inv_InventoryVerifiedID_OutByBox | Chưa làm | - |
 | 749 | QRBrandController/WA_Map_StampPairHist_Add | Chưa làm | - |
-| 750 | QRBrandController/WA_Mst_NotifyUpdVersion_Get | Chưa làm | - |
+| 750 | QRBrandController/WA_Mst_NotifyUpdVersion_Get | Đã làm | 1009dda |
