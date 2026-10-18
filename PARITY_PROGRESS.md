@@ -422,7 +422,7 @@ Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã c�
 | 410 | InBrandController/WA_Inv_InventoryVerifiedID_BoxGet | Chưa làm | - |
 | 411 | InBrandController/WA_Inv_InventoryVerifiedID_OutByBox | Chưa làm | - |
 | 412 | InBrandController/WA_Map_StampPairHist_Add | Chưa làm | - |
-| 413 | InBrandController/WA_Mst_NotifyUpdVersion_Get | Chưa làm | - |
+| 413 | InBrandController/WA_Mst_NotifyUpdVersion_Get | Đã làm | fbca4c5 |
 | 414 | InBrandController/WA_Inv_InventoryVerifiedID_OutByBoxGet | Chưa làm | - |
 | 415 | InBrandController/WA_Inv_InventoryVerifiedID_OutByBoxSearch | Chưa làm | - |
 | 416 | InBrandController/WA_Inv_InventoryVerifiedID_OutByBoxUpd | Chưa làm | - |
