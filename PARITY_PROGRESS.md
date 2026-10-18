@@ -4,7 +4,7 @@ Nguồn mẫu số: `D:\idocNet\2019.9.MobileGate\Dev\V10\idN.MobileGate.Biz.Web
 
 **Mẫu số (N)**: 750
 
-**Tiến độ hiện tại**: 1/750 (0.13%)
+**Tiến độ hiện tại**: 2/750 (0.27%)
 
 Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã có` (đã port từ trước, có bằng chứng) · `Bỏ` (scaffold/không nghiệp vụ, ghi lý do) · `Cần xem tay`.
 
@@ -59,7 +59,7 @@ Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã c�
 | 47 | EcoreController/Inos_RequestToken | Chưa làm | - |
 | 48 | EcoreController/Inos_InitToken | Chưa làm | - |
 | 49 | EcoreController/Inos_GetUser | Chưa làm | - |
-| 50 | EcoreController/Inos_CheckUserExist | Chưa làm | - |
+| 50 | EcoreController/Inos_CheckUserExist | Đã làm | 5b78320 |
 | 51 | EcoreController/Inos_GetUserInfor | Chưa làm | - |
 | 52 | EcoreController/Inos_RegisterMobile | Chưa làm | - |
 | 53 | EcoreController/Inos_ActivateMobile | Chưa làm | - |
