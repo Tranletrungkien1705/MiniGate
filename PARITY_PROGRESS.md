@@ -4,7 +4,7 @@ Nguồn mẫu số: `D:\idocNet\2019.9.MobileGate\Dev\V10\idN.MobileGate.Biz.Web
 
 **Mẫu số (N)**: 750
 
-**Tiến độ hiện tại**: 7/750 (0.93%)
+**Tiến độ hiện tại**: 8/750 (1.07%)
 
 Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã có` (đã port từ trước, có bằng chứng) · `Bỏ` (scaffold/không nghiệp vụ, ghi lý do) · `Cần xem tay`.
 
@@ -356,7 +356,7 @@ Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã c�
 | 344 | InBrandController/WA_Map_IDInBox_Merge | Chưa làm | - |
 | 345 | InBrandController/WA_Mst_Inventory_GetByUser | Chưa làm | - |
 | 346 | InBrandController/WA_Inv_InvVerifiedID_OutGenInAndOutOffline | Chưa làm | - |
-| 347 | InBrandController/WA_MstSv_Mst_Network_GetMinVersion | Chưa làm | - |
+| 347 | InBrandController/WA_MstSv_Mst_Network_GetMinVersion | Đã làm | b332d02 |
 | 348 | InBrandController/WA_Mst_Device_GetByDeviceID | Chưa làm | - |
 | 349 | InBrandController/WA_Inv_InvVerifiedID_OutGenInAndOut_Get | Chưa làm | - |
 | 350 | InBrandController/WA_Inv_InvVerifiedID_OutGenInAndOut_Search | Chưa làm | - |
