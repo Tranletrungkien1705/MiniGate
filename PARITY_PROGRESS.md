@@ -4,7 +4,7 @@ Nguồn mẫu số: `D:\idocNet\2019.9.MobileGate\Dev\V10\idN.MobileGate.Biz.Web
 
 **Mẫu số (N)**: 750
 
-**Tiến độ hiện tại**: 2/750 (0.27%)
+**Tiến độ hiện tại**: 3/750 (0.4%)
 
 Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã có` (đã port từ trước, có bằng chứng) · `Bỏ` (scaffold/không nghiệp vụ, ghi lý do) · `Cần xem tay`.
 
@@ -74,7 +74,7 @@ Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã c�
 | 62 | EcoreController/Inos_RequestTokenExternalByUserCode | Chưa làm | - |
 | 63 | EcoreController/Inos_RegisterFirebaseAccount | Chưa làm | - |
 | 64 | EcoreController/Inos_RemoveFirebaseAccount | Chưa làm | - |
-| 65 | EcoreController/WA_Mst_UserBlackList_Save | Chưa làm | - |
+| 65 | EcoreController/WA_Mst_UserBlackList_Save | Đã làm | 54759f8 |
 | 66 | ElasticSearchController/WA_ELTS_Event_Event_Search | Chưa làm | - |
 | 67 | ElasticSearchController/WA_ELTS_Event_EventSpec_SearchByELTSEventId | Chưa làm | - |
 | 68 | EQRController/WA_Inv_GenTimes_Get | Chưa làm | - |
