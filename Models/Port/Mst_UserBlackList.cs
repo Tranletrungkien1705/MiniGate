@@ -7,13 +7,13 @@ using MiniGate.Data;
 namespace MiniGate.Models.Port;
 
 // ===========================================================================================
-// PORT 1:1 từ dự án nguồn 2019.9.MobileGate — Mst_UserBlackList (#050).
+// PORT 1:1 từ dự án nguồn 2019.9.MobileGate — Mst_UserBlackList (#050, #065).
 //
 // Nguồn tra cứu (chỉ đọc):
 //   - DDL: 05.Refs/Migrate/20231115.Mst_UserBlackList_CreateTable/20231115.Mst_UserBlackList_CreateTable.sql:4-23
 //   - Model: idN.MobileGate.Common/Models/Mst_UserBlackList.cs:9-23
 //   - BIZ CheckDB: zTemp.cs:42607-42664 (Mst_UserBlackList_CheckDB)
-//   - BIZ sử dụng: Ecore.cs:678-745 (Inos_CheckUserExist_New20231115)
+//   - BIZ sử dụng: Ecore.cs:678-745 (Inos_CheckUserExist_New20231115), zTemp.cs:42673-42900 (Mst_UserBlackList_Save)
 // ===========================================================================================
 
 /// <summary>
