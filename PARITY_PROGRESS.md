@@ -4,7 +4,7 @@ Nguồn mẫu số: `D:\idocNet\2019.9.MobileGate\Dev\V10\idN.MobileGate.Biz.Web
 
 **Mẫu số (N)**: 750
 
-**Tiến độ hiện tại**: 0/750 (0%)
+**Tiến độ hiện tại**: 1/750 (0.13%)
 
 Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã có` (đã port từ trước, có bằng chứng) · `Bỏ` (scaffold/không nghiệp vụ, ghi lý do) · `Cần xem tay`.
 
@@ -20,7 +20,7 @@ Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã c�
 | 8 | ApprovalsController/WA_Mst_DataType_Get | Chưa làm | - |
 | 9 | ApprovalsController/WA_Mst_ApprovalType_Get | Chưa làm | - |
 | 10 | ApprovalsController/WA_Sys_User_Get | Chưa làm | - |
-| 11 | CommonController/WA_Common_GetDTime | Chưa làm | - |
+| 11 | CommonController/WA_Common_GetDTime | Đã làm | 6422a19 |
 | 12 | DMSController/WA_Prm_Promotion_Get | Chưa làm | - |
 | 13 | DMSController/WA_Ord_Order_CalcPrm | Chưa làm | - |
 | 14 | DMSController/WA_Mst_PromotionMainType_Get | Chưa làm | - |
