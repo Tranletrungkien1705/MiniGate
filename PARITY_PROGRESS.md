@@ -4,7 +4,7 @@ Nguồn mẫu số: `D:\idocNet\2019.9.MobileGate\Dev\V10\idN.MobileGate.Biz.Web
 
 **Mẫu số (N)**: 750
 
-**Tiến độ hiện tại**: 5/750 (0.67%)
+**Tiến độ hiện tại**: 6/750 (0.8%)
 
 Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã có` (đã port từ trước, có bằng chứng) · `Bỏ` (scaffold/không nghiệp vụ, ghi lý do) · `Cần xem tay`.
 
@@ -183,7 +183,7 @@ Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã c�
 | 171 | EQRController/WA_Inv_InventoryVerifiedID_BoxGet | Chưa làm | - |
 | 172 | EQRController/WA_Inv_InventoryVerifiedID_OutByBox | Chưa làm | - |
 | 173 | EQRController/WA_Map_StampPairHist_Add | Chưa làm | - |
-| 174 | EQRController/WA_Mst_NotifyUpdVersion_Get | Chưa làm | - |
+| 174 | EQRController/WA_Mst_NotifyUpdVersion_Get | Đã làm | 9f8466a |
 | 175 | EQRController/WA_Inv_InventoryVerifiedID_OutByBoxGet | Chưa làm | - |
 | 176 | EQRController/WA_Inv_InventoryVerifiedID_OutByBoxSearch | Chưa làm | - |
 | 177 | EQRController/WA_Inv_InventoryVerifiedID_OutByBoxUpd | Chưa làm | - |
