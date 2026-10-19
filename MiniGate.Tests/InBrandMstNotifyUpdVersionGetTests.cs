@@ -213,11 +213,12 @@ public class InBrandMstNotifyUpdVersionGetTests
     [Fact]
     public async Task GetNotifyUpdVersion_RealServer_OnPort8557_RoundTripAndFilters()
     {
-        var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "test_port_8557.db");
+        var port = FreePort.Get();
+        var dbPath = Path.Combine(Directory.GetCurrentDirectory(), $"test_port_{port}.db");
         if (File.Exists(dbPath)) File.Delete(dbPath);
 
         var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseUrls("http://127.0.0.1:8557");
+        builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
         builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
         builder.Services.AddScoped<ITenantContext, TenantContext>();
         builder.Services.AddControllers(o =>
@@ -238,7 +239,7 @@ public class InBrandMstNotifyUpdVersionGetTests
 
         try
         {
-            using var client = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:8557") };
+            using var client = new HttpClient { BaseAddress = new Uri($"http://127.0.0.1:{port}") };
 
             // Ca 1: Body rong {}
             var res1 = await client.PostAsync("/api/inbrand/wa_mst_notifyupdversion_get", new StringContent("{}", Encoding.UTF8, "application/json"));

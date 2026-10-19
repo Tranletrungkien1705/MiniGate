@@ -172,11 +172,12 @@ public class InBrandMstSvMstNetworkGetMinVersionTests
     [Fact]
     public async Task GetMinVersion_RealServer_OnPort8556_RoundTripAndFilters()
     {
-        var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "test_port_8556.db");
+        var port = FreePort.Get();
+        var dbPath = Path.Combine(Directory.GetCurrentDirectory(), $"test_port_{port}_{Guid.NewGuid():N}.db");
         if (File.Exists(dbPath)) File.Delete(dbPath);
 
         var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseUrls("http://127.0.0.1:8556");
+        builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
         builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
         builder.Services.AddScoped<ITenantContext, TenantContext>();
         builder.Services.AddControllers(o =>
@@ -197,7 +198,7 @@ public class InBrandMstSvMstNetworkGetMinVersionTests
 
         try
         {
-            using var client = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:8556") };
+            using var client = new HttpClient { BaseAddress = new Uri($"http://127.0.0.1:{port}") };
 
             // Ca 1: Body rong {}
             var res1 = await client.PostAsync("/api/inbrand/wa_mstsv_mst_network_getminversion", new StringContent("{}", Encoding.UTF8, "application/json"));
