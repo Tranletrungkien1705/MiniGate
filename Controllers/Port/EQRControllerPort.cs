@@ -19,6 +19,10 @@ namespace MiniGate.Controllers.Port;
 //      - Nguồn controller: EQRController.cs:17373-17515
 //      - Nguồn biz: EQR.cs:21864-21950 (EQR_WAS_Mst_NotifyUpdVersion_Get), EQR.cs:21952-22090 (EQR_Mst_NotifyUpdVersion_Get)
 //      - Mã lỗi: TError.ErridNTVAN.Mst_NotifyUpdVersion_Get = "ErridInBrand.Mst_NotifyUpdVersion_Get"
+//   3. WA_ELTS_eTEM_Search (hạng mục #166):
+//      - Nguồn controller: EQRController.cs:16097-16246
+//      - Nguồn biz: ElasticSearch.cs:2168-2306 (WAS_ELTS_eTEM_Search_New20210813), ElasticSearch.cs:1436-1723 (ELTS_eTEM_Search)
+//      - Mã lỗi: TError.ErridNTVAN.WAS_ELTS_eTEM_Search, TError.ErridNTVAN.ELTS_eTEM_Search, TError.ErridNTVAN.CmSys_InvalidOutSite
 // ============================================================================================
 
 /// <summary>
@@ -93,8 +97,64 @@ public class EQRMstNotifyUpdVersionGetResp
     public RT_Mst_NotifyUpdVersion? Data { get; set; }
 }
 
+// ============================================================================================
+// PORT 1:1 — EQRController/WA_ELTS_eTEM_Search (hạng mục #166) của dự án nguồn 2019.9.MobileGate.
+//
+// Nguồn controller (tầng gate):
+//   EQRController.cs:16097-16246  WA_ELTS_eTEM_Search -> gọi _biz.WAS_ELTS_eTEM_Search_New20210813
+// Nguồn biz:
+//   ElasticSearch.cs:2168-2306  WAS_ELTS_eTEM_Search_New20210813 (mã lỗi mặc định TError.ErridNTVAN.WAS_ELTS_eTEM_Search)
+//   ElasticSearch.cs:1436-1723  ELTS_eTEM_Search (mã lỗi mặc định TError.ErridNTVAN.ELTS_eTEM_Search)
+// Nguồn model & hằng số:
+//   RQ_ELTS_eTEM_Search / RT_ELTS_eTEM_Search: KHÔNG có định nghĩa trong source_excerpt.txt
+//   TError.ErridNTVAN.CmSys_InvalidOutSite (ElasticSearch.cs:1666)
+//
+// GIỮ ĐÚNG NGUỒN & QUY ƯỚC:
+//   * Route: POST /api/eqr/wa_elts_etem_search (nhận [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)]).
+//   * Bước 1 (ElasticSearch.cs:2203-2250): URI chứa http:// hoặc https:// -> tra Mst_DomainConfig
+//     (FlagActive = '1' and DomainValues = host); KHÔNG thấy -> ELTSBizCodeReturn = "ERR_AUS".
+//     URI không phải URL -> ELTSBizCodeReturn = "ERR_IU". Cả hai nhánh đặt TrackingCode = RefInfo = URI.
+//   * Bước 2 (ElasticSearch.cs:2252-2276): chỉ khi bước 1 KHÔNG lỗi mới gọi dịch vụ ngoài
+//     OS_MstSv_ElasticSearchServices.Instance.WA_ELTS_eTEM_Search -> GAP, KHÔNG mô phỏng.
+//   * Bỏ qua CheckAuthorize / CheckGatewayAuthentication / ProcessBizReq_OutSide theo quy ước chung của môi trường port.
+// ============================================================================================
+
 /// <summary>
-/// Controller Port 1:1 cho EQRController (hạng mục #108).
+/// DTO yêu cầu cho action WA_ELTS_eTEM_Search — port 1:1 từ RQ_ELTS_eTEM_Search
+/// (EQRController.cs:16097, ElasticSearch.cs:2255-2275). Định nghĩa model nguồn không có trong excerpt nên
+/// chỉ khai các trường mà gate/biz THỰC SỰ đọc.
+/// </summary>
+public class EQREltsEtemSearchReq
+{
+    public string? Tid { get; set; }                      // Transaction ID (EQRController.cs:16100, 16163)
+    public string? URI { get; set; }                      // Chuỗi truy vấn (ElasticSearch.cs:2205, 2266)
+    public string? PhoneNumber { get; set; }              // Số điện thoại (EQRController.cs:16136, ElasticSearch.cs:2267)
+    public string? UserID { get; set; }                   // Mã người dùng (EQRController.cs:16137, ElasticSearch.cs:2272)
+    public string? AccessToken { get; set; }              // Token truy cập (ElasticSearch.cs:2263)
+    public string? NetworkID { get; set; }                // Mã mạng (ElasticSearch.cs:2261)
+    public string? OrgID { get; set; }                    // Mã tổ chức (ElasticSearch.cs:2262)
+    public string? WAUserCode { get; set; }               // Người dùng WA (ElasticSearch.cs:2259)
+    public string? WAUserPassword { get; set; }           // Mật khẩu người dùng WA (ElasticSearch.cs:2260)
+    public string? MapLongitude { get; set; }             // Kinh độ (ElasticSearch.cs:2268)
+    public string? MapLatitude { get; set; }              // Vĩ độ (ElasticSearch.cs:2269)
+    public string? Location { get; set; }                 // Vị trí (ElasticSearch.cs:2270)
+    public string? FlagIncreaseQueryCount { get; set; }   // Cờ tăng số lần truy vấn (ElasticSearch.cs:2271)
+    public int? pageIndex { get; set; }                   // Trang bắt đầu (EQRController.cs:16145)
+    public int? pageSize { get; set; }                    // Kích thước trang (EQRController.cs:16146)
+}
+
+/// <summary>
+/// DTO phản hồi trả về cho client — chứa Success và Data (RT_ELTS_eTEM_Search).
+/// RT_ELTS_eTEM_Search dùng CHUNG với InBrandControllerPort (#405) — KHÔNG định nghĩa lại.
+/// </summary>
+public class EQREltsEtemSearchResp
+{
+    public bool Success { get; set; } = true;
+    public RT_ELTS_eTEM_Search? Data { get; set; }
+}
+
+/// <summary>
+/// Controller Port 1:1 cho EQRController (hạng mục #108, #174, #166).
 /// </summary>
 [ApiController]
 [Route("api/eqr")]
@@ -320,5 +380,87 @@ public class EQRControllerPort : ControllerBase
             // Nguồn: EQR.cs:21971, 22067 (strErrorCodeDefault = TError.ErridNTVAN.Mst_NotifyUpdVersion_Get)
             return PortResult.Fail("Mst_NotifyUpdVersion_Get", "Exception", ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Port 1:1 action WA_ELTS_eTEM_Search (EQRController.cs:16097-16246).
+    /// Kiểm tra tên miền của URI trong Mst_DomainConfig; URI không phải URL -> ERR_IU, tên miền không cấu hình -> ERR_AUS.
+    /// Nhánh hợp lệ gọi dịch vụ ngoài ElasticSearch (GAP — không mô phỏng).
+    /// </summary>
+    [HttpPost("wa_elts_etem_search")]
+    public async Task<IActionResult> WA_ELTS_eTEM_Search(
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] EQREltsEtemSearchReq? req,
+        [FromServices] AppDbContext db)
+    {
+        // 1. Tid: gate gán GetNextTId() (EQRController.cs:16163) — ở đích dùng Tid client gửi, thiếu thì sinh theo mốc thời gian.
+        var tid = !string.IsNullOrWhiteSpace(req?.Tid)
+            ? req.Tid
+            : DateTime.Now.ToString("yyyyMMdd.HHmmss.ffffff");
+
+        // 2. Bỏ qua CheckAuthorize / CheckGatewayAuthentication (GAP theo PORT_RULES_MiniGate §1).
+
+        var rt = new RT_ELTS_eTEM_Search();
+        var uri = req?.URI;
+
+        // 3. Refine and Check Input (ElasticSearch.cs:2203-2250)
+        //    Nguồn: strUri.Contains("http://") || strUri.Contains("https://") — URI null sẽ ném NullReference ở nguồn,
+        //    ở đích để PortExceptionFilter trả 400 (không tự đặt giá trị thay thế).
+        var isUrl = uri!.Contains("http://") || uri.Contains("https://");
+        if (isUrl)
+        {
+            // ElasticSearch.cs:2212-2213: host của URI
+            var host = new Uri(uri).Host;
+
+            // ElasticSearch.cs:2215-2228: select t.* from Mst_DomainConfig t where (1=1) and t.FlagActive = '1' and t.DomainValues = @strDomainValues
+            var hostPattern = PortQuery.Equal(host);
+            var domainFound = await db.Set<Mst_DomainConfig>()
+                .Where(x => EF.Functions.Like((x.FlagActive ?? "").ToLower(), "1", PortQuery.Esc)
+                            && EF.Functions.Like((x.DomainValues ?? "").ToLower(), hostPattern, PortQuery.Esc))
+                .AnyAsync();
+
+            if (!domainFound)
+            {
+                // ElasticSearch.cs:2236-2239
+                rt.ELTSBizCodeReturn = "ERR_AUS";
+                rt.TrackingCode = uri;
+                rt.RefInfo = uri;
+            }
+        }
+        else
+        {
+            // ElasticSearch.cs:2244-2247
+            rt.ELTSBizCodeReturn = "ERR_IU";
+            rt.TrackingCode = uri;
+            rt.RefInfo = uri;
+        }
+
+        // 4. ElasticSearch.cs:2252-2276: nhánh hợp lệ gọi OS_MstSv_ElasticSearchServices.Instance.WA_ELTS_eTEM_Search
+        //    (dịch vụ ngoài) -> GAP: KHÔNG mô phỏng, các trường kết quả của nhánh này để null.
+
+        // 5. Phong bì kết quả (EQRController.cs:16198: resultEntry.Data = objRT_ELTS_eTEM_Search)
+        rt.c_K_DT_Sys = new c_K_DT_Sys
+        {
+            Lst_c_K_DT_SysInfo = new List<c_K_DT_SysInfo>
+            {
+                new c_K_DT_SysInfo
+                {
+                    Tid = tid,
+                    DigitalSignature = null,
+                    ErrorCode = "0",
+                    FlagWarning = "0",
+                    Remark = null,
+                    FlagCompress = null,
+                    FlagEncrypt = null
+                }
+            },
+            Lst_c_K_DT_SysError = new List<c_K_DT_SysError>(),
+            Lst_c_K_DT_SysWarning = new List<c_K_DT_SysWarning>()
+        };
+
+        return Ok(new EQREltsEtemSearchResp
+        {
+            Success = true,
+            Data = rt
+        });
     }
 }
