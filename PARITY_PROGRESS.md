@@ -4,7 +4,7 @@ Nguồn mẫu số: `D:\idocNet\2019.9.MobileGate\Dev\V10\idN.MobileGate.Biz.Web
 
 **Mẫu số (N)**: 750
 
-**Tiến độ hiện tại**: 8/750 (1.07%)
+**Tiến độ hiện tại**: 10/750 (1.33%)
 
 Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã có` (đã port từ trước, có bằng chứng) · `Bỏ` (scaffold/không nghiệp vụ, ghi lý do) · `Cần xem tay`.
 
@@ -414,7 +414,7 @@ Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã c�
 | 402 | InBrandController/WA_RptSvND_RatingTimes_SearchLastestHist | Chưa làm | - |
 | 403 | InBrandController/WA_Seq_Common_Get | Chưa làm | - |
 | 404 | InBrandController/WA_Inbrand_Seq_Common_Get | Chưa làm | - |
-| 405 | InBrandController/WA_ELTS_eTEM_Search | Chưa làm | - |
+| 405 | InBrandController/WA_ELTS_eTEM_Search | Đã làm | 810ec19 |
 | 406 | InBrandController/WA_RptSvND_ProductRatingInstRateTimes_Search | Chưa làm | - |
 | 407 | InBrandController/WA_ELTS_Rpt_Inv_InventoryVerifiedIDForSearch_GetNotifyForSearch | Chưa làm | - |
 | 408 | InBrandController/WA_RptSvND_UserRegisterTopic_GetTopic | Chưa làm | - |
