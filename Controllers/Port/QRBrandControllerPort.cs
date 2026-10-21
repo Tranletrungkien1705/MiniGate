@@ -27,7 +27,19 @@ namespace MiniGate.Controllers.Port;
 //       - TError.ErridNTVAN.MstSv_Mst_Network_GetMinVersion = "ErridInBrand.MstSv_Mst_Network_GetMinVersion"
 //       - TError.ErridNTVAN.WAS_MstSv_Mst_Network_GetMinVersion = "ErridInBrand.WAS_MstSv_Mst_Network_GetMinVersion"
 //
-// 2. WA_Mst_NotifyUpdVersion_Get (hạng mục #750):
+// 2. WA_ELTS_eTEM_Search (hạng mục #742):
+//   - Nguồn controller (tầng gate):
+//     QRBrandController.cs:14133-14282     WA_ELTS_eTEM_Search -> gọi _biz.WAS_ELTS_eTEM_Search_New20210813
+//   - Nguồn biz:
+//     ElasticSearch.cs:2168-2306           WAS_ELTS_eTEM_Search_New20210813 (mã lỗi mặc định TError.ErridNTVAN.WAS_ELTS_eTEM_Search)
+//     ElasticSearch.cs:1436-1723           ELTS_eTEM_Search (mã lỗi mặc định TError.ErridNTVAN.ELTS_eTEM_Search)
+//   - Nguồn model & hằng số:
+//     RQ_ELTS_eTEM_Search / RT_ELTS_eTEM_Search: KHÔNG có định nghĩa trong source_excerpt.txt
+//     TError.ErridNTVAN.CmSys_InvalidOutSite (ElasticSearch.cs:1666)
+//   - Dùng lại DTO/entity đã có: RT_ELTS_eTEM_Search, InBrandEltsEtemSearchReq (cùng RQ_ELTS_eTEM_Search),
+//     Mst_DomainConfig (Models/Port/Mst_DomainConfig.cs, #405).
+//
+// 3. WA_Mst_NotifyUpdVersion_Get (hạng mục #750):
 //   - Nguồn controller (tầng gate):
 //     QRBrandController.cs:15409-15551     WA_Mst_NotifyUpdVersion_Get -> gọi _biz.WAS_QRBrand_Mst_NotifyUpdVersion_Get
 //   - Nguồn biz:
@@ -102,7 +114,16 @@ public class QRBrandMstNotifyUpdVersionGetResp
 }
 
 /// <summary>
-/// Controller Port 1:1 cho QRBrandController (hạng mục #750 và #108).
+/// DTO phản hồi trả về cho client cho WA_ELTS_eTEM_Search — chứa Success và Data (RT_ELTS_eTEM_Search).
+/// </summary>
+public class QRBrandEltsEtemSearchResp
+{
+    public bool Success { get; set; } = true;
+    public RT_ELTS_eTEM_Search? Data { get; set; }
+}
+
+/// <summary>
+/// Controller Port 1:1 cho QRBrandController (hạng mục #750, #108 và #742).
 /// </summary>
 [ApiController]
 [Route("api/qrbrand")]
@@ -190,6 +211,88 @@ public class QRBrandControllerPort : ControllerBase
             // Nguồn: QRBrand.cs:13726, 13805 (strErrorCodeDefault = TError.ErridNTVAN.MstSv_Mst_Network_GetMinVersion)
             return PortResult.Fail("MstSv_Mst_Network_GetMinVersion", "Exception", ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Port 1:1 action WA_ELTS_eTEM_Search (QRBrandController.cs:14133-14282).
+    /// Kiểm tra tên miền của URI trong Mst_DomainConfig; URI không phải URL -> ERR_IU, tên miền không cấu hình -> ERR_AUS.
+    /// Nhánh hợp lệ gọi dịch vụ ngoài ElasticSearch (GAP — không mô phỏng).
+    /// </summary>
+    [HttpPost("wa_elts_etem_search")]
+    public async Task<IActionResult> WA_ELTS_eTEM_Search(
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] InBrandEltsEtemSearchReq? req,
+        [FromServices] AppDbContext db)
+    {
+        // 1. Tid: gate gán GetNextTId() (QRBrandController.cs:14199) — ở đích dùng Tid client gửi, thiếu thì sinh theo mốc thời gian.
+        var tid = !string.IsNullOrWhiteSpace(req?.Tid)
+            ? req.Tid
+            : DateTime.Now.ToString("yyyyMMdd.HHmmss.ffffff");
+
+        // 2. Bỏ qua CheckAuthorize / CheckGatewayAuthentication (GAP theo PORT_RULES_MiniGate §1).
+
+        var rt = new RT_ELTS_eTEM_Search();
+        var uri = req?.URI;
+
+        // 3. Refine and Check Input (ElasticSearch.cs:2203-2250)
+        //    Nguồn: strUri.Contains("http://") || strUri.Contains("https://") — URI null sẽ ném NullReference ở nguồn,
+        //    ở đích để PortExceptionFilter trả 400 (không tự đặt giá trị thay thế).
+        var isUrl = uri!.Contains("http://") || uri.Contains("https://");
+        if (isUrl)
+        {
+            // ElasticSearch.cs:2212-2213: host của URI
+            var host = new Uri(uri).Host;
+
+            // ElasticSearch.cs:2215-2228: select t.* from Mst_DomainConfig t where (1=1) and t.FlagActive = '1' and t.DomainValues = @strDomainValues
+            var hostPattern = PortQuery.Equal(host);
+            var domainFound = await db.Set<Mst_DomainConfig>()
+                .Where(x => EF.Functions.Like((x.FlagActive ?? "").ToLower(), "1", PortQuery.Esc)
+                            && EF.Functions.Like((x.DomainValues ?? "").ToLower(), hostPattern, PortQuery.Esc))
+                .AnyAsync();
+
+            if (!domainFound)
+            {
+                // ElasticSearch.cs:2236-2239
+                rt.ELTSBizCodeReturn = "ERR_AUS";
+                rt.TrackingCode = uri;
+                rt.RefInfo = uri;
+            }
+        }
+        else
+        {
+            // ElasticSearch.cs:2244-2247
+            rt.ELTSBizCodeReturn = "ERR_IU";
+            rt.TrackingCode = uri;
+            rt.RefInfo = uri;
+        }
+
+        // 4. ElasticSearch.cs:2252-2276: nhánh hợp lệ gọi OS_MstSv_ElasticSearchServices.Instance.WA_ELTS_eTEM_Search
+        //    (dịch vụ ngoài) -> GAP: KHÔNG mô phỏng, các trường kết quả của nhánh này để null.
+
+        // 5. Phong bì kết quả (QRBrandController.cs:14234: resultEntry.Data = objRT_ELTS_eTEM_Search)
+        rt.c_K_DT_Sys = new c_K_DT_Sys
+        {
+            Lst_c_K_DT_SysInfo = new List<c_K_DT_SysInfo>
+            {
+                new c_K_DT_SysInfo
+                {
+                    Tid = tid,
+                    DigitalSignature = null,
+                    ErrorCode = "0",
+                    FlagWarning = "0",
+                    Remark = null,
+                    FlagCompress = null,
+                    FlagEncrypt = null
+                }
+            },
+            Lst_c_K_DT_SysError = new List<c_K_DT_SysError>(),
+            Lst_c_K_DT_SysWarning = new List<c_K_DT_SysWarning>()
+        };
+
+        return Ok(new QRBrandEltsEtemSearchResp
+        {
+            Success = true,
+            Data = rt
+        });
     }
 
     /// <summary>
