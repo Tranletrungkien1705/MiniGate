@@ -4,7 +4,7 @@ Nguồn mẫu số: `D:\idocNet\2019.9.MobileGate\Dev\V10\idN.MobileGate.Biz.Web
 
 **Mẫu số (N)**: 750
 
-**Tiến độ hiện tại**: 11/750 (1.47%)
+**Tiến độ hiện tại**: 12/750 (1.6%)
 
 Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã có` (đã port từ trước, có bằng chứng) · `Bỏ` (scaffold/không nghiệp vụ, ghi lý do) · `Cần xem tay`.
 
@@ -492,7 +492,7 @@ Trạng thái: `Chưa làm` · `Đã làm` (có commit, review PASS) · `Đã c�
 | 480 | INOSController/GetCurrentUser | Chưa làm | - |
 | 481 | INOSController/GetNotifications | Chưa làm | - |
 | 482 | INOSController/UpdateNotificationStatus | Chưa làm | - |
-| 483 | INOSController/GetUserPermissions | Chưa làm | - |
+| 483 | INOSController/GetUserPermissions | Đã làm | 8d012bc |
 | 484 | InternalNewsController/WA_Mst_CategoryNews_Get | Chưa làm | - |
 | 485 | InternalNewsController/WA_Mst_CategoryNews_Search | Chưa làm | - |
 | 486 | InternalNewsController/WA_Mst_InternalNews_Get | Chưa làm | - |
