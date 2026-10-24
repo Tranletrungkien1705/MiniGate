@@ -14,17 +14,25 @@ namespace MiniGate.Controllers.Port;
 // Hạng mục #483 — GetUserPermissions:
 //   INOSController.cs:655-776   GetUserPermissions -> _biz.WAS_Inos_Permissions_GetUserPermissions
 //   OS.Inos.cs:4005-4064        Inos_Permissions_GetUserPermissions -> UserService.GetUserPermissions (ngoài)
-// Hạng mục #478 — GetCurrentUserSolutions (MỤC NÀY):
+// Hạng mục #478 — GetCurrentUserSolutions:
 //   INOSController.cs:33-154    GetCurrentUserSolutions -> _biz.WAS_Inos_LicService_GetCurrentUserSolution
 //   DMS.cs:8982-9060            WAS_Inos_LicService_GetCurrentUserSolution -> Inos_LicService_GetCurrentUserSolution
-//                               (KHÔNG có định nghĩa trong nguồn trích — 'BIZ: khong thay dinh nghia
-//                                Inos_LicService_GetCurrentUserSolution', source_excerpt.txt:460)
-//   Mã lỗi mặc định của biz:    TError.ErridNTVAN.WAS_OS_Inos_OrderService_GetDiscountCode (DMS.cs:8999)
+// Hạng mục #479 — GetAllSolutions (MỤC NÀY):
+//   INOSController.cs:157-278   GetAllSolutions -> _biz.WAS_Inos_LicService_GetAllSolutions
+//   DMS.cs:9158-9236            WAS_Inos_LicService_GetAllSolutions
+//   DMS.cs:9064-9156            Inos_LicService_GetAllSolutions
+//                               -> LicService.GetAllSolutions() (dịch vụ ngoài) rồi chỉ MAP sang
+//                                  DMS.Inos_LicOrgSolution (LicId, PackageId, OrgId, SolutionCode, Name,
+//                                  Domain, ImageUrl, ModuleList[Code, Count]) — DMS.cs:9102-9136.
+//                               Lỗi dịch vụ -> CMyException.Raise(TError.ErridNTVAN.Inos_LicService_GetCurrentUserSolutions)
+//                               (DMS.cs:9149-9153, tên mã là lỗi copy-paste của dev nguồn — GIỮ NGUYÊN);
+//                               wrapper bọc lại bằng mã mặc định WAS_OS_Inos_OrderService_GetDiscountCode (DMS.cs:9175).
+//   Ghi chú: source_excerpt.txt:460 ghi "khong thay dinh nghia" là SAI — grep thấy DMS.cs:9064.
 //
-// Cả hai hạng mục: TOÀN BỘ DỮ LIỆU NẰM Ở DỊCH VỤ NGOÀI iNOS. Gate chỉ kiểm token qua iNOS
+// Cả ba hạng mục: TOÀN BỘ DỮ LIỆU NẰM Ở DỊCH VỤ NGOÀI iNOS. Gate chỉ kiểm token qua iNOS
 // AccountService (ApiControllerBase.cs:85-125), biz chỉ gọi dịch vụ ngoài rồi trả về. Đích không có
 // dịch vụ iNOS ⇒ KHÔNG mô phỏng, KHÔNG tự chế bảng/kết quả (PORT_RULES_MiniGate.md §1, §2.5;
-// LESSONS_AGENTS.md B.7). Xem .parity-run\conflicts\478_conflict.md và NO_BACKEND.flag.
+// LESSONS_AGENTS.md B.7). Xem .parity-run\conflicts\478_conflict.md, 479_conflict.md và NO_BACKEND.flag.
 //
 // QUY ƯỚC CHUNG:
 //   * Route: POST /api/inos/<action viết thường> ([FromBody(EmptyBodyBehavior = Allow)]).
@@ -97,8 +105,10 @@ public class INOSGetCurrentUserSolutionsReq
 }
 
 /// <summary>
-/// Kết quả nghiệp vụ — port 1:1 từ RT_Inos_LicOrgSolution (DMS.cs:8991, 9031).
+/// Kết quả nghiệp vụ — port 1:1 từ RT_Inos_LicOrgSolution
+/// (idN.MobileGate.Common\Models\Skycic_DMS\RT_Inos_LicOrgSolution.cs:9-11; DMS.cs:9167, 9207).
 /// Kiểu phần tử Inos_LicOrgSolution thuộc dịch vụ ngoài iNOS (không có định nghĩa trong nguồn trích) ⇒ object.
+/// Dùng CHUNG cho #478 và #479 (cùng một kiểu trả về của nguồn).
 /// </summary>
 public class RT_Inos_LicOrgSolution
 {
@@ -114,8 +124,40 @@ public class INOSGetCurrentUserSolutionsResp
     public RT_Inos_LicOrgSolution? Data { get; set; }
 }
 
+// ---------------------------------------------------------------------------
+// #479 GetAllSolutions
+// ---------------------------------------------------------------------------
+
 /// <summary>
-/// Controller Port 1:1 cho INOSController (hạng mục #483 + #478).
+/// DTO yêu cầu cho action GetAllSolutions — port 1:1 từ RQ_Inos_LicOrgSolution
+/// (INOSController.cs:157, 184-192; DMS.cs:9158-9206).
+/// Nguồn: RQ_Inos_LicOrgSolution.cs:9-11 (kế thừa WARQBase) + Inos_LicOrgSolution.cs:9-19.
+/// Các trường GwUserCode/GwPassword/AccessToken/OrgID/Ft_RecordStart/Ft_RecordCount do gate gán
+/// từ header/cấu hình (INOSController.cs:184-194) — KHÔNG nhận từ body.
+/// </summary>
+public class INOSGetAllSolutionsReq
+{
+    public string? Tid { get; set; }                 // Transaction ID (INOSController.cs:161, 190)
+    public string? WAUserCode { get; set; }          // Người dùng WA (INOSController.cs:184, 191; DMS.cs:9199)
+    public string? WAUserPassword { get; set; }      // Mật khẩu người dùng WA (DMS.cs:9200)
+    public int? pageIndex { get; set; }              // -> Ft_RecordStart (INOSController.cs:185)
+    public int? pageSize { get; set; }               // -> Ft_RecordCount (INOSController.cs:186)
+    // Nguồn: DMS.Inos_LicOrgSolution (object) — DMS.cs:9205. Dữ liệu nằm ở dịch vụ ngoài nên không dùng.
+    public object? Inos_LicOrgSolution { get; set; }
+}
+
+/// <summary>
+/// DTO phản hồi trả về cho client — gate trả JsonResultEntry { Success, Data = RT_Inos_LicOrgSolution }
+/// (INOSController.cs:244-245). Dùng chung kiểu RT_Inos_LicOrgSolution với #478 (đúng kiểu nguồn).
+/// </summary>
+public class INOSGetAllSolutionsResp
+{
+    public bool Success { get; set; } = true;
+    public RT_Inos_LicOrgSolution? Data { get; set; }
+}
+
+/// <summary>
+/// Controller Port 1:1 cho INOSController (hạng mục #483 + #478 + #479).
 /// </summary>
 [ApiController]
 [Route("api/inos")]
@@ -211,6 +253,62 @@ public class INOSControllerPort : ControllerBase
         //       gọi dịch vụ ngoài iNOS) -> TOÀN BỘ dữ liệu nằm ở dịch vụ ngoài iNOS -> GAP, KHÔNG mô phỏng.
         //    Biz bọc lỗi bằng mã mặc định TError.ErridNTVAN.WAS_OS_Inos_OrderService_GetDiscountCode (DMS.cs:8999, 9041-9046),
         //    gate trả Success = false (INOSController.cs:123-151).
+        return PortResult.Fail(
+            "WAS_OS_Inos_OrderService_GetDiscountCode",
+            "Check.strAccessToken", strAuthorization);
+    }
+
+    /// <summary>
+    /// Port 1:1 action GetAllSolutions (INOSController.cs:157-278, hạng mục #479).
+    /// Nguồn: gate -> _biz.WAS_Inos_LicService_GetAllSolutions (DMS.cs:9158-9236)
+    ///        -> Inos_LicService_GetAllSolutions (DMS.cs:9064-9156) -> LicService.GetAllSolutions() (dịch vụ NGOÀI iNOS).
+    /// Biz chỉ MAP kết quả dịch vụ ngoài sang DMS.Inos_LicOrgSolution (DMS.cs:9102-9136); KHÔNG có SQL,
+    /// KHÔNG có bảng CSDL nội bộ nào ⇒ phần dữ liệu là GAP, KHÔNG mô phỏng/bịa.
+    /// </summary>
+    [HttpPost("getallsolutions")]
+    public IActionResult GetAllSolutions(
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] INOSGetAllSolutionsReq? req)
+    {
+        // 1. Refine and Check Token (INOSController.cs:176-182): Authorization: Bearer <token>
+        var strVal = Request?.Headers["Authorization"].FirstOrDefault();
+        string? strAuthorization = null;
+        if (!string.IsNullOrEmpty(strVal) && strVal.StartsWith("Bearer "))
+        {
+            strAuthorization = strVal.Substring(7);
+        }
+
+        // 2. Header orgId (INOSController.cs:193-194, 221)
+        var strOrgID = Request?.Headers["orgId"].FirstOrDefault();
+
+        // 3. CheckAuthorize (INOSController.cs:198-219 -> ApiControllerBase.cs:85-125):
+        //    orgId rỗng -> false (ApiControllerBase.cs:96-100); token rỗng -> false (ApiControllerBase.cs:103-122);
+        //    còn lại gọi dịch vụ ngoài iNOS AccountService.GetCurrentUser (ApiControllerBase.cs:109-114)
+        //    -> GAP: đích không có dịch vụ iNOS nên KHÔNG xác thực được token.
+        var checkAuthorize = !string.IsNullOrEmpty(strOrgID) && !string.IsNullOrEmpty(strAuthorization);
+
+        if (!checkAuthorize)
+        {
+            // INOSController.cs:204-211: { Success = false, Message = "Authorize is false", Detail = ... }, HTTP 200.
+            return Ok(new
+            {
+                Success = false,
+                Message = "Authorize is false",
+                Detail = "Authorize is false"
+            });
+        }
+
+        // 4. CheckGatewayAuthentication (INOSController.cs:225-232) — bỏ qua theo quy ước chung của môi trường port.
+
+        // 5. _biz.WAS_Inos_LicService_GetAllSolutions (INOSController.cs:234 -> DMS.cs:9158-9236)
+        //    -> Inos_LicService_GetAllSolutions (DMS.cs:9064-9156)
+        //       LicService objLicService = new LicService(null);            // DMS.cs:9099 — dịch vụ ngoài iNOS
+        //       objLicService.AccessToken = strAccessToken;                 // DMS.cs:9100
+        //       List<OrgSolution> ret = objLicService.GetAllSolutions();    // DMS.cs:9102 — TOÀN BỘ dữ liệu ở đây
+        //    Lỗi dịch vụ -> CMyException.Raise(TError.ErridNTVAN.Inos_LicService_GetCurrentUserSolutions)
+        //    (DMS.cs:9149-9153 — tên mã là lỗi copy-paste của dev nguồn, GIỮ NGUYÊN), rồi wrapper bọc lại
+        //    bằng mã mặc định TError.ErridNTVAN.WAS_OS_Inos_OrderService_GetDiscountCode (DMS.cs:9175, 9217-9222);
+        //    gate trả Success = false (INOSController.cs:247-277).
+        //    => GAP: KHÔNG mô phỏng danh sách solution (số liệu phải đến từ nguồn, không tự điền).
         return PortResult.Fail(
             "WAS_OS_Inos_OrderService_GetDiscountCode",
             "Check.strAccessToken", strAuthorization);
